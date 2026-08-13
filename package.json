@@ -154,22 +154,18 @@
   "dependencies": {
     "@cursor/sdk": "1.0.23",
     "@hono/node-server": "2.0.12",
-    "@modelcontextprotocol/sdk": "1.30.0"
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@oh-my-pi/omptype": "17.3.0",
+    "@oh-my-pi/pi-ai": "17.3.0",
+    "@oh-my-pi/pi-coding-agent": "17.3.0",
+    "@oh-my-pi/pi-tui": "17.3.0",
+    "@oh-my-pi/pi-utils": "17.3.0"
   },
   "bundledDependencies": [
     "@hono/node-server",
     "@modelcontextprotocol/sdk"
   ],
-  "peerDependencies": {
-    "@oh-my-pi/pi-ai": ">=17.3.0 <18",
-    "@oh-my-pi/pi-coding-agent": ">=17.3.0 <18",
-    "@oh-my-pi/pi-tui": ">=17.3.0 <18",
-    "typebox": "*"
-  },
   "devDependencies": {
-    "@oh-my-pi/pi-ai": "17.3.0",
-    "@oh-my-pi/pi-coding-agent": "17.3.0",
-    "@oh-my-pi/pi-tui": "17.3.0",
     "@xterm/xterm": "^6.0.0",
     "node-pty": "^1.1.0",
     "playwright": "^1.60.0",
@@ -184,19 +180,5 @@
   },
   "allowScripts": {
     "node-pty@1.1.0": true
-  },
-  "peerDependenciesMeta": {
-    "@oh-my-pi/pi-ai": {
-      "optional": true
-    },
-    "@oh-my-pi/pi-coding-agent": {
-      "optional": true
-    },
-    "@oh-my-pi/pi-tui": {
-      "optional": true
-    },
-    "typebox": {
-      "optional": true
-    }
   }
 }
