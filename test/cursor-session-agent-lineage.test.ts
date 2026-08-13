@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	CURSOR_SESSION_AGENT_LINEAGE_ENTRY_TYPE,
 	parseCursorSessionAgentLineageEntryData,

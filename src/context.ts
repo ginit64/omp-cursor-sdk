@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { Context, Message, ToolCall } from "@earendil-works/pi-ai";
-import { convertToLlm } from "@earendil-works/pi-coding-agent";
+import type { Context, Message, ToolCall } from "@oh-my-pi/pi-ai";
+import { convertToLlm } from "@oh-my-pi/pi-coding-agent";
 import type { AgentModeOption, SDKImage } from "@cursor/sdk";
 import { CURSOR_PI_BRIDGE_PREFERENCE_TEXT } from "./cursor-bridge-contract.js";
 import { getCursorReplayPromptLabel } from "./cursor-tool-presentation-registry.js";
@@ -279,6 +279,8 @@ function serializeMessageForFingerprint(message: Message, index: number): string
 			return hashCursorContextValue(
 				`toolResult:${message.timestamp ?? index}:${message.toolCallId}:${message.toolName}:${JSON.stringify(message.content)}:${message.isError === true}`,
 			);
+		default:
+			return hashCursorContextValue(`unknown:${index}:${JSON.stringify(message)}`);
 	}
 }
 
@@ -337,7 +339,7 @@ function parseCursorContextFingerprint(fingerprint: string): CursorContextFinger
 
 export function computeCursorContextFingerprint(context: Context): string {
 	const payload: CursorContextFingerprintPayload = {
-		systemHash: hashCursorContextValue(context.systemPrompt ?? ""),
+		systemHash: hashCursorContextValue((context.systemPrompt ?? []).join("\n")),
 		messageHashes: context.messages.map((message, index) => serializeRawPiMessageForFingerprint(message, index)),
 	};
 	return JSON.stringify(payload);
@@ -412,8 +414,8 @@ export function buildCursorPrompt(context: Context, options: CursorPromptOptions
 		sectionsBeforeMessages.push(options.toolManifest);
 	}
 
-	if (context.systemPrompt) {
-		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
+	if (context.systemPrompt?.length) {
+		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor((context.systemPrompt ?? []).join("\n"))}`);
 	}
 
 	const messages = normalizePiContextMessages(context.messages);

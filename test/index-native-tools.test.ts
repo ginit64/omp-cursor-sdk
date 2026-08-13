@@ -3,13 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { stripVTControlCharacters } from "node:util";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { resetCapabilitiesCache, setCapabilities } from "@earendil-works/pi-tui";
+import { resetCapabilitiesCache, setCapabilities } from "@oh-my-pi/pi-tui";
 import { Type } from "typebox";
 import {
 	createEditToolDefinition,
 	createReadToolDefinition,
 	createWriteToolDefinition,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import {
 	createBuiltinToolInfo,
 	createExtensionTestContext,

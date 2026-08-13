@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SendOptions } from "@cursor/sdk";
-import { AssistantMessageComponent, initTheme } from "@earendil-works/pi-coding-agent";
-import { visibleWidth } from "@earendil-works/pi-tui";
+import { AssistantMessageComponent, initTheme } from "@oh-my-pi/pi-coding-agent";
+import { visibleWidth } from "@oh-my-pi/pi-tui";
 import { CLOUD_AGENT_ID_PATTERN } from "../shared/cursor-cloud-lifecycle-constants.mjs";
 import { streamCursor } from "../src/cursor-provider.js";
 import {

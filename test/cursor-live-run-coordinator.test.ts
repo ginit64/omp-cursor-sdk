@@ -1,5 +1,5 @@
 import type { SDKAgent } from "@cursor/sdk";
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
+import { createAssistantMessageEventStream } from "@oh-my-pi/pi-ai";
 import { makeAssistantMessage, makeContext, makeModel } from "./helpers/pi-harness.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {

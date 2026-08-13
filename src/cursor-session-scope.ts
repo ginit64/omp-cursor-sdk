@@ -1,12 +1,9 @@
 import { resolve } from "node:path";
-import { parseArgs } from "@earendil-works/pi-coding-agent";
-import type { ExtensionHandler, ProjectTrustHandler, SessionInfoChangedEvent, SessionStartEvent } from "@earendil-works/pi-coding-agent";
+import type { ExtensionHandler, SessionStartEvent } from "@oh-my-pi/pi-coding-agent";
 import { truncateCursorDisplayLine } from "./cursor-display-text.js";
 
 interface CursorSessionScopeExtensionApi {
-	on(event: "project_trust", handler: ProjectTrustHandler): void;
 	on(event: "session_start", handler: ExtensionHandler<SessionStartEvent>): void;
-	on(event: "session_info_changed", handler: ExtensionHandler<SessionInfoChangedEvent>): void;
 }
 
 const ANONYMOUS_SESSION_SCOPE_KEY = "__anonymous__";
@@ -93,8 +90,10 @@ function recordProjectTrustResolution(cwd: string): void {
 	projectTrustResolutionCwds.add(resolve(cwd));
 }
 
+// OMP has no per-project trust event or --approve flag (Pi 0.84 surface);
+// --auto-approve is the closest analog and defaults to untrusted.
 function isCliProjectTrustApproved(args = process.argv.slice(2)): boolean {
-	return parseArgs(args).projectTrustOverride === true;
+	return args.includes("--auto-approve");
 }
 
 function resetCursorSessionScope(): void {
@@ -115,26 +114,18 @@ export function onCursorSessionScopeKeyChange(handler: CursorSessionScopeChangeH
 }
 
 export function registerCursorSessionScope(pi: CursorSessionScopeExtensionApi): void {
-	pi.on("project_trust", (event) => {
-		recordProjectTrustResolution(event.cwd);
-		return { trusted: "undecided" };
-	});
 	pi.on("session_start", async (_event, ctx) => {
 		const previousScopeKey = getCursorSessionScopeKey();
 		setCursorSessionScope(
 			ctx.cwd,
 			ctx.sessionManager?.getSessionFile?.() ?? undefined,
 			ctx.sessionManager?.getSessionId?.() ?? undefined,
-			ctx.isProjectTrusted?.() === true
-				&& (projectTrustResolutionCwds.has(resolve(ctx.cwd)) || isCliProjectTrustApproved()),
+			isCliProjectTrustApproved(),
 			ctx.sessionManager?.getSessionName?.() ?? undefined,
 		);
 		if (previousScopeKey !== getCursorSessionScopeKey()) {
 			await scopeChangeHandler?.(previousScopeKey);
 		}
-	});
-	pi.on("session_info_changed", (event) => {
-		state.sessionName = normalizeCursorSessionName(event.name);
 	});
 }
 

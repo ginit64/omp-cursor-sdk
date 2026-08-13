@@ -3,7 +3,7 @@ import { cpSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, wri
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, sep } from "node:path";
-import { OPENAI_CODEX_MODELS } from "@earendil-works/pi-ai/providers/openai-codex.models";
+import { OPENAI_CODEX_MODELS } from "@oh-my-pi/pi-ai/providers/openai-codex.models";
 import { describe, expect, it } from "vitest";
 import { FALLBACK_MODEL_ITEMS } from "../src/cursor-fallback-models.generated.js";
 
@@ -22,9 +22,9 @@ const packageLock = require("../package-lock.json") as {
 };
 
 const PI_PACKAGES = [
-	"@earendil-works/pi-ai",
-	"@earendil-works/pi-coding-agent",
-	"@earendil-works/pi-tui",
+	"@oh-my-pi/pi-ai",
+	"@oh-my-pi/pi-coding-agent",
+	"@oh-my-pi/pi-tui",
 ] as const;
 
 const BUNDLED_MCP_HONO_CLOSURE = ["@hono/node-server", "@modelcontextprotocol/sdk"] as const;

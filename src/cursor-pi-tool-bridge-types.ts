@@ -1,5 +1,5 @@
 import type { McpServerConfig } from "@cursor/sdk";
-import type { Context, ToolResultMessage } from "@earendil-works/pi-ai";
+import type { Context, ToolResultMessage } from "@oh-my-pi/pi-ai";
 import type { CursorSdkEventDebugRecorder } from "./cursor-sdk-event-debug.js";
 import type {
 	ExtensionAPI,
@@ -9,7 +9,7 @@ import type {
 	ToolCallEventResult,
 	ToolInfo,
 	ToolResultEvent,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 
 export type CursorPiToolBridgeSnapshotApi = Pick<ExtensionAPI, "getActiveTools" | "getAllTools">;
 

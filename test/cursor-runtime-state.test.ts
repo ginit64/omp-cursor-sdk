@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import { CURSOR_HTTP1_ENV } from "../src/cursor-config.js";
 import {
 	__testUtils,

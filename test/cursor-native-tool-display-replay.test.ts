@@ -10,7 +10,7 @@ import {
 	renderNativeLookingCursorReadReplayResult,
 } from "../src/cursor-native-tool-display-replay.js";
 import { LOCAL_READ_PREVIEW_NOTICE } from "../src/cursor-transcript-utils.js";
-import { Text } from "@earendil-works/pi-tui";
+import { Text } from "@oh-my-pi/pi-tui";
 import { createRenderContext, createRenderTheme } from "./helpers/render-fixtures.js";
 
 const theme = createRenderTheme();

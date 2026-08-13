@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { Text } from "@earendil-works/pi-tui";
-import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
+import { Text } from "@oh-my-pi/pi-tui";
+import type { ToolDefinition } from "@oh-my-pi/pi-coding-agent";
 import { Type } from "typebox";
 import * as replay from "../src/cursor-native-tool-display-replay.js";
 import { wrapNativeCursorTool } from "../src/cursor-native-tool-display-tools.js";

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import type { ExtensionAPI, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import type { SessionCursorAgentSendState } from "./cursor-session-agent.js";
 import { asRecord } from "./cursor-record-utils.js";
 import { getCursorSessionScopeKey } from "./cursor-session-scope.js";
@@ -206,7 +206,7 @@ function matchesCurrentSession(
 }
 
 function canResumeHandleSpanEntry(entry: SessionEntry): boolean {
-	if (entry.type === "custom" || entry.type === "label" || entry.type === "session_info") return true;
+	if (entry.type === "custom" || entry.type === "label" || entry.type === "session_init") return true;
 	return entry.type === "message" && entry.message.role === "user";
 }
 

@@ -1,13 +1,13 @@
 import type { Dirent } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
+import { getActiveSkills } from "@oh-my-pi/pi-coding-agent";
 import type {
-	BuildSystemPromptOptions,
 	ExtensionAPI,
 	ExtensionContext,
 	Skill,
-} from "@earendil-works/pi-coding-agent";
-import { Type } from "typebox";
+} from "@oh-my-pi/pi-coding-agent";
+import { Type } from "@oh-my-pi/omptype/typebox";
 import { arePiToolsDisabled } from "./cursor-active-tools.js";
 import type { CursorRuntime } from "./cursor-config.js";
 import { isCursorModel } from "./cursor-model.js";
@@ -48,7 +48,9 @@ function escapeXml(value: string): string {
 }
 
 function getVisibleSkills(skills: readonly Skill[] | undefined): Skill[] {
-	return (skills ?? []).filter((skill) => !skill.disableModelInvocation);
+	// Pi's Skill.disableModelInvocation does not exist in OMP; hidden skills
+	// (excluded from the system-prompt listing) are the closest analog.
+	return (skills ?? []).filter((skill) => !skill.hide);
 }
 
 function setCurrentSkills(skills: readonly Skill[] | undefined): void {
@@ -61,7 +63,7 @@ function getAvailableSkillNames(): string[] {
 
 function resolveEffectiveRuntimeForSkillLifecycle(
 	cursorModel: boolean,
-	ctx: Pick<ExtensionContext, "cwd"> & Partial<Pick<ExtensionContext, "isProjectTrusted">>,
+	ctx: Pick<ExtensionContext, "cwd">,
 ): CursorRuntime {
 	return cursorModel ? resolveEffectiveCursorConfigForContext(ctx).runtime.value : "local";
 }
@@ -113,14 +115,14 @@ export function formatCursorSkillsForPrompt(skills: readonly Skill[]): string {
 export function resolveCursorSkillSystemPrompt(
 	systemPrompt: string,
 	model: ExtensionContext["model"],
-	systemPromptOptions?: BuildSystemPromptOptions,
+	skills: readonly Skill[],
 	runtime: CursorRuntime = "local",
 ): string {
 	if (!isCursorModel(model)) return systemPrompt;
 	if (runtime === "cloud") return systemPrompt.replace(AVAILABLE_SKILLS_SECTION_PATTERN, "");
-	const skills = getVisibleSkills(systemPromptOptions?.skills);
-	if (skills.length === 0) return systemPrompt;
-	const replacement = formatCursorSkillsForPrompt(skills);
+	const visibleSkills = getVisibleSkills(skills);
+	if (visibleSkills.length === 0) return systemPrompt;
+	const replacement = formatCursorSkillsForPrompt(visibleSkills);
 	if (AVAILABLE_SKILLS_SECTION_PATTERN.test(systemPrompt)) {
 		return systemPrompt.replace(AVAILABLE_SKILLS_SECTION_PATTERN, replacement);
 	}
@@ -194,14 +196,9 @@ export function registerCursorSkillTool(pi: CursorSkillToolExtensionApi): void {
 		name: CURSOR_ACTIVATE_SKILL_TOOL_NAME,
 		label: "Cursor skill",
 		description: "Load full pi Agent Skill instructions for Cursor. Use with a skill name from the current <available_skills> catalog before applying that skill.",
-		promptSnippet: "Load full pi Agent Skill instructions for a listed skill before Cursor applies that skill",
 		parameters: Type.Object({
 			name: Type.String({ description: "Skill name from the current <available_skills> catalog" }),
 		}),
-		promptGuidelines: [
-			`Use ${CURSOR_ACTIVATE_SKILL_TOOL_NAME} only for skill names listed in the current <available_skills> catalog.`,
-			"After loading a skill, follow its instructions and resolve relative skill paths against the returned skill directory.",
-		],
 		async execute(_toolCallId, params) {
 			const requestedName = (params as CursorActivateSkillParams).name?.trim();
 			if (!requestedName) {
@@ -253,14 +250,17 @@ export function registerCursorSkillTool(pi: CursorSkillToolExtensionApi): void {
 			const cursorModel = isCursorModel(ctx.model);
 			const runtime = resolveEffectiveRuntimeForSkillLifecycle(cursorModel, ctx);
 			if (cursorModel && runtime === "local") {
-				setCurrentSkills(event.systemPromptOptions?.skills);
+				// OMP's before_agent_start carries no systemPromptOptions;
+				// source the catalog from OMP's active-skill registry instead.
+				setCurrentSkills(getActiveSkills());
 			} else {
 				setCurrentSkills([]);
 			}
 			syncCursorSkillToolForModel(pi, ctx.model, runtime);
-			const resolved = resolveCursorSkillSystemPrompt(event.systemPrompt, ctx.model, event.systemPromptOptions, runtime);
-			if (resolved === event.systemPrompt) return undefined;
-			return { systemPrompt: resolved };
+			const systemPrompt = event.systemPrompt.join("\n");
+			const resolved = resolveCursorSkillSystemPrompt(systemPrompt, ctx.model, getActiveSkills(), runtime);
+			if (resolved === systemPrompt) return undefined;
+			return { systemPrompt: [resolved] };
 		},
 	});
 }

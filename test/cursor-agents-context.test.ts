@@ -3,16 +3,16 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@earendil-works/pi-coding-agent")>();
+vi.mock("@oh-my-pi/pi-coding-agent", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@oh-my-pi/pi-coding-agent")>();
 	return {
 		...actual,
 		getAgentDir: () => "/Users/me/.pi/agent",
 	};
 });
 
-import type { BeforeAgentStartEvent, BuildSystemPromptOptions, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { Context } from "@earendil-works/pi-ai";
+import type { BeforeAgentStartEvent, BuildSystemPromptOptions, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import type { Context } from "@oh-my-pi/pi-ai";
 import {
 	classifyContextFileOverlap,
 	CURSOR_PRESERVE_PI_AGENTS_MD_ENV,
@@ -51,7 +51,7 @@ let cachedBuildSystemPrompt: PiBuildSystemPrompt | undefined;
 
 function loadInstalledPiBuildSystemPrompt(): PiBuildSystemPrompt {
 	if (cachedBuildSystemPrompt) return cachedBuildSystemPrompt;
-	const piMain = fileURLToPath(import.meta.resolve("@earendil-works/pi-coding-agent"));
+	const piMain = fileURLToPath(import.meta.resolve("@oh-my-pi/pi-coding-agent"));
 	const piPackageRoot = dirname(dirname(piMain));
 	const require = createRequire(piMain);
 	cachedBuildSystemPrompt = require(join(piPackageRoot, "dist/core/system-prompt.js")).buildSystemPrompt as PiBuildSystemPrompt;

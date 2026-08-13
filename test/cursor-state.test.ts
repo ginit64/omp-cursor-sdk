@@ -14,7 +14,7 @@ import {
 } from "../src/cursor-state.js";
 import { __testUtils as modelDiscoveryTestUtils } from "../src/model-discovery.js";
 import type { ModelListItem } from "@cursor/sdk";
-import type { ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import { CURSOR_HTTP1_ENV } from "../src/cursor-config.js";
 import {
 	createExtensionCommandContext,

@@ -1,6 +1,7 @@
 import { CursorLiveRunAbortError } from "./cursor-live-run-coordinator.js";
 import { drainExistingCursorLiveRunBeforeSend } from "./cursor-provider-live-run-drain.js";
 import { invalidateSessionAgent } from "./cursor-session-agent.js";
+import { resolveCursorStringApiKey } from "./cursor-api-key.js";
 import { getCursorSessionCwd, getCursorSessionScopeKey } from "./cursor-session-scope.js";
 import { installCursorSdkProcessErrorGuard } from "./cursor-sdk-process-error-guard.js";
 import type { CursorRuntime } from "./cursor-config.js";
@@ -142,7 +143,7 @@ export class CursorProviderTurnRunner {
 				runResultFallback: send.run.result,
 				runErrorFallback: send.run.error,
 				resolvedApiKey: this.resolvedApiKey,
-				optionsApiKey: options?.apiKey,
+				optionsApiKey: resolveCursorStringApiKey(options?.apiKey),
 				sdkEventDebug: this.sdkEventDebug,
 				contextWindowAgentId: prepared.contextWindowAgentId,
 			});

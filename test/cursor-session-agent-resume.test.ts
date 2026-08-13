@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SessionManager, type SessionEntry } from "@earendil-works/pi-coding-agent";
+import { SessionManager, type SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import { registerCursorSessionScope, __testUtils as scopeTestUtils } from "../src/cursor-session-scope.js";
 import {
 	CURSOR_SESSION_AGENT_RESUME_ENTRY_TYPE,
@@ -195,7 +195,7 @@ describe("cursor-session-agent-resume", () => {
 			const child = spawnSync(process.execPath, [
 				"--input-type=module",
 				"-e",
-				`import { SessionManager } from "@earendil-works/pi-coding-agent"; const manager = SessionManager.open(${JSON.stringify(manager.getSessionFile()!)}); manager.appendMessage({ role: "user", content: "submitted before crash", timestamp: 2 }); process.kill(process.pid, "SIGKILL");`,
+				`import { SessionManager } from "@oh-my-pi/pi-coding-agent"; const manager = SessionManager.open(${JSON.stringify(manager.getSessionFile()!)}); manager.appendMessage({ role: "user", content: "submitted before crash", timestamp: 2 }); process.kill(process.pid, "SIGKILL");`,
 			], { cwd: process.cwd(), encoding: "utf8" });
 			expect(child.status).not.toBe(0);
 

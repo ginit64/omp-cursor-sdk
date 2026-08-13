@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
-import type { BeforeAgentStartEvent, ExtensionContext, Skill } from "@earendil-works/pi-coding-agent";
+import type { BeforeAgentStartEvent, ExtensionContext, Skill } from "@oh-my-pi/pi-coding-agent";
 import {
 	CURSOR_ACTIVATE_SKILL_MCP_NAME,
 	CURSOR_ACTIVATE_SKILL_TOOL_NAME,

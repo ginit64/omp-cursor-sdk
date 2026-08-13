@@ -1,5 +1,5 @@
-import type { Api, Model } from "@earendil-works/pi-ai";
-import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
+import type { Api, Model } from "@oh-my-pi/pi-ai";
+import type { ProviderModelConfig } from "@oh-my-pi/pi-coding-agent";
 
 export function makeModel(id = "test-model"): Model<"cursor-sdk"> {
 	return {

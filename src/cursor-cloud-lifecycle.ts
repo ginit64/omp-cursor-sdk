@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { closeSync, constants, existsSync, fchmodSync, fstatSync, fsyncSync, lstatSync, openSync, readFileSync, readSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import { resolveCursorApiKey } from "./cursor-api-key.js";
 import {
 	MAX_CLOUD_REPORT_BRANCHES,

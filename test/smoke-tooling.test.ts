@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
-import { parseArgs as parsePiArgs } from "../node_modules/@earendil-works/pi-coding-agent/dist/cli/args.js";
-import { buildInitialMessage } from "../node_modules/@earendil-works/pi-coding-agent/dist/cli/initial-message.js";
+import { parseArgs as parsePiArgs } from "../node_modules/@oh-my-pi/pi-coding-agent/dist/cli/args.js";
+import { buildInitialMessage } from "../node_modules/@oh-my-pi/pi-coding-agent/dist/cli/initial-message.js";
 import { CURSOR_TOOL_PRESENTATION_SPECS } from "../src/cursor-tool-presentation-registry.js";
 import { getScenario, renderPrompt, SCENARIOS } from "../scripts/platform-smoke/scenarios.mjs";
 
@@ -234,7 +234,7 @@ try {
 		expect(buildInitialMessage({ parsed }).initialMessage).toBe(prompt);
 		expect(parsed.messages).toEqual([]);
 
-		const piArgs = readFileSync("node_modules/@earendil-works/pi-coding-agent/dist/cli/args.js", "utf8");
+		const piArgs = readFileSync("node_modules/@oh-my-pi/pi-coding-agent/dist/cli/args.js", "utf8");
 		expect(piArgs).toContain("# Interactive mode with initial prompt");
 		expect(piArgs).toContain('${APP_NAME} "List all .ts files in src/"');
 		expect(piArgs).toContain("PI_OFFLINE");

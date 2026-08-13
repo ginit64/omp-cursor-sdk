@@ -1,8 +1,8 @@
 import type {
 	BuildSystemPromptOptions,
 	ExtensionContext,
-} from "@earendil-works/pi-coding-agent";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
+import { getAgentDir } from "@oh-my-pi/pi-coding-agent";
 import { parseEnvBoolean } from "./cursor-env-boolean.js";
 import { isCursorModel } from "./cursor-model.js";
 import {

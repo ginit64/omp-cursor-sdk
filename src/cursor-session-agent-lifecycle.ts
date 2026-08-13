@@ -4,7 +4,7 @@ import type {
 	SessionCompactEvent,
 	SessionShutdownEvent,
 	SessionTreeEvent,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import { clearCursorSdkHttp1 } from "./cursor-http1.js";
 import { onCursorSessionScopeKeyChange } from "./cursor-session-scope.js";
 
@@ -21,13 +21,10 @@ export function registerCursorSessionAgentLifecycle(pi: CursorSessionAgentLifecy
 		const { disposeSessionCursorAgent } = await import("./cursor-session-agent.js");
 		await disposeSessionCursorAgent(previousScopeKey);
 	});
-	pi.on("session_shutdown", async (event) => {
-		const { disposeSessionCursorAgent, resetSessionCursorAgent } = await import("./cursor-session-agent.js");
+	pi.on("session_shutdown", async () => {
+		const { disposeSessionCursorAgent } = await import("./cursor-session-agent.js");
 		try {
-			if (event.reason === "reload") {
-				await resetSessionCursorAgent();
-				return;
-			}
+			// OMP's session_shutdown carries no reason; always dispose.
 			await disposeSessionCursorAgent();
 		} finally {
 			clearCursorSdkHttp1();

@@ -1,13 +1,13 @@
 import { vi } from "vitest";
-import { InMemoryCredentialStore } from "@earendil-works/pi-ai";
-import type { AssistantMessage, AssistantMessageEvent, Context } from "@earendil-works/pi-ai";
+import { InMemoryCredentialStore } from "@oh-my-pi/pi-ai";
+import type { AssistantMessage, AssistantMessageEvent, Context } from "@oh-my-pi/pi-ai";
 import {
 	ModelRegistry,
 	ModelRuntime,
 	type BuildSystemPromptOptions,
 	type ExtensionCommandContext,
 	type ExtensionContext,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import { makeModel } from "./model-fixtures.js";
 import type { ExtensionCommandContextOverrides, ExtensionContextOverrides } from "./pi-harness-types.js";
 

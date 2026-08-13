@@ -2,7 +2,7 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, sym
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SessionManager, type SessionEntry } from "@earendil-works/pi-coding-agent";
+import { SessionManager, type SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	CLOUD_LIFECYCLE_ENTRY_TYPE,
 	__testUtils as cloudLifecycleTestUtils,

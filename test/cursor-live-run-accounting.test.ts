@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Context, ToolResultMessage } from "@earendil-works/pi-ai";
+import type { Context, ToolResultMessage } from "@oh-my-pi/pi-ai";
 import { estimateCursorPromptMessageTokens } from "../src/context.js";
 import {
 	consumeCursorLiveToolResults,

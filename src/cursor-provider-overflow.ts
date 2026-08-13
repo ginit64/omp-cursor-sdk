@@ -1,5 +1,5 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import type { AssistantMessage } from "@oh-my-pi/pi-ai";
 import { CURSOR_PROVIDER } from "./cursor-model.js";
 
 /**
@@ -78,19 +78,9 @@ export function rewriteCursorOverflowAssistantMessage(
 export type CursorOverflowExtensionApi = Pick<ExtensionAPI, "on">;
 
 /**
- * Register a `message_end` handler that rewrites Cursor context-overflow
- * failures into the `context_length_exceeded` form pi auto-compacts on.
- *
- * Guarded exactly as pi's provider docs require: scoped to the Cursor provider,
- * only for `stopReason === "error"`, never for throttling, and idempotent.
+ * OMP's message_end handler cannot return a replacement message (Pi 0.84
+ * result surface), so the event registration is inert. Overflow normalization
+ * now runs inside the provider terminal-error path
+ * (cursor-provider-run-finalizer.pushTerminalError).
  */
-export function registerCursorOverflowNormalization(pi: CursorOverflowExtensionApi): void {
-	pi.on("message_end", (event, ctx) => {
-		const message = event.message;
-		if (message.role !== "assistant") return undefined;
-		const isCursorProvider = message.provider === CURSOR_PROVIDER || ctx.model?.provider === CURSOR_PROVIDER;
-		const rewritten = rewriteCursorOverflowAssistantMessage(message, isCursorProvider);
-		if (!rewritten) return undefined;
-		return { message: rewritten };
-	});
-}
+export function registerCursorOverflowNormalization(_pi: CursorOverflowExtensionApi): void {}

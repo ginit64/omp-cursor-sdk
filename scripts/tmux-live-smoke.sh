@@ -446,7 +446,7 @@ log "tmux=$TMUX_BIN"
 log "partial live smoke: prereq, basic, default-settings, noninteractive-math, tui, steering, diagnostics, jsonl"
 
 "${BASE_ENV[@]}" "$PI_BIN" --version | tee "$SMOKE_DIR/prereq.pi-version.txt"
-"${BASE_ENV[@]}" "$NPM_BIN" --prefix "$ROOT" ls @cursor/sdk @earendil-works/pi-coding-agent @earendil-works/pi-ai @earendil-works/pi-tui | tee "$SMOKE_DIR/prereq.npm-ls.txt"
+"${BASE_ENV[@]}" "$NPM_BIN" --prefix "$ROOT" ls @cursor/sdk @oh-my-pi/pi-coding-agent @oh-my-pi/pi-ai @oh-my-pi/pi-tui | tee "$SMOKE_DIR/prereq.npm-ls.txt"
 
 capture_and_require_composer_model "${NONE_ENV[@]}" "${PI_BASE[@]}" --list-models cursor
 log "prereq PASS"

@@ -1,4 +1,4 @@
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { AssistantMessage } from "@oh-my-pi/pi-ai";
 import { cursorLiveRuns } from "./cursor-provider-live-run-drain.js";
 import {
 	classifyCursorRunEmission,
@@ -11,6 +11,8 @@ import {
 	sanitizeCursorProviderError,
 } from "./cursor-provider-errors.js";
 import type { CursorRuntime } from "./cursor-config.js";
+import { resolveCursorStringApiKey } from "./cursor-api-key.js";
+import { rewriteCursorOverflowAssistantMessage } from "./cursor-provider-overflow.js";
 import { CursorLiveRunAbortError } from "./cursor-live-run-coordinator.js";
 import {
 	buildIncompleteCursorToolRunOutcome,
@@ -101,7 +103,7 @@ export class CursorRunFinalizer {
 			runResultFallback: run.result,
 			runErrorFallback: run.error,
 			resolvedApiKey: this.params.resolvedApiKey(),
-			optionsApiKey: runnerParams.options?.apiKey,
+			optionsApiKey: resolveCursorStringApiKey(runnerParams.options?.apiKey),
 			sdkEventDebug,
 			cacheContextWindow: true,
 			contextWindowAgentId: liveRun.agent.agentId,
@@ -114,7 +116,7 @@ export class CursorRunFinalizer {
 				if (!liveRun.disposed) {
 					cursorLiveRuns.markError(
 						liveRun,
-						sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? runnerParams.options?.apiKey, "local"),
+						sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? resolveCursorStringApiKey(runnerParams.options?.apiKey), "local"),
 					);
 				}
 				this.safeCleanup(() => sdkEventDebug?.recordWaitResult({ status: "error", error: String(error) }));
@@ -217,7 +219,7 @@ export class CursorRunFinalizer {
 				"error",
 				sanitizeCursorProviderError(
 					error,
-					this.params.resolvedApiKey() ?? this.params.runnerParams.options?.apiKey,
+					this.params.resolvedApiKey() ?? resolveCursorStringApiKey(this.params.runnerParams.options?.apiKey),
 					prepared?.runtimeTarget ?? this.params.runtimeTarget(),
 				),
 			);
@@ -227,6 +229,13 @@ export class CursorRunFinalizer {
 	private pushTerminalError(partial: AssistantMessage, reason: "error" | "aborted", message: string): void {
 		partial.stopReason = reason;
 		partial.errorMessage = message;
+		if (reason === "error") {
+			// OMP's message_end handler cannot replace the message (Pi 0.84
+			// result surface); normalize Cursor context-overflow here so OMP
+			// auto-compacts instead of surfacing a generic provider error.
+			const rewritten = rewriteCursorOverflowAssistantMessage(partial, true);
+			if (rewritten) Object.assign(partial, rewritten);
+		}
 		this.params.runnerParams.stream.push({ type: "error", reason, error: partial });
 	}
 

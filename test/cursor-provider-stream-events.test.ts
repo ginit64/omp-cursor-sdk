@@ -17,7 +17,7 @@ import {
 	mockedCreate,
 } from "./helpers/cursor-provider-harness.js";
 import { streamCursor, __testUtils as cursorProviderTestUtils } from "../src/cursor-provider.js";
-import type { Context } from "@earendil-works/pi-ai";
+import type { Context } from "@oh-my-pi/pi-ai";
 
 
 describe("streamCursor stream events", () => {

@@ -1,5 +1,5 @@
 import type { AgentModeOption } from "@cursor/sdk";
-import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	buildCursorToolManifestText,
 	CURSOR_TOOL_MANIFEST_ENV,
@@ -251,7 +251,7 @@ export function getCursorProviderAgentModeOrThrow(): AgentModeOption {
 	return resolution.mode;
 }
 
-type CursorStatusContext = Pick<ExtensionContext, "cwd"> & Partial<Pick<ExtensionContext, "isProjectTrusted">>;
+type CursorStatusContext = Pick<ExtensionContext, "cwd">;
 
 function updateCursorStatus(ctx: CursorStatusContext & Pick<ExtensionContext, "model" | "ui">, model = ctx.model): void {
 	if (!model || !isCursorModel(model)) {
@@ -360,9 +360,10 @@ function restoreCliCursorMode(raw: boolean | string | undefined): void {
 	cliCursorModeState = { kind: "invalid", raw: rawText, message };
 }
 
-function notifyInvalidCursorModeIfCursorActive(ctx: Pick<ExtensionContext, "hasUI" | "mode" | "ui">): void {
+function notifyInvalidCursorModeIfCursorActive(ctx: Pick<ExtensionContext, "hasUI" | "ui">): void {
 	const modeResolution = resolveCursorAgentMode();
-	if (modeResolution.kind !== "invalid" || !ctx.hasUI || ctx.mode !== "tui") return;
+	// OMP's ExtensionContext has no mode field; hasUI implies an interactive TUI.
+	if (modeResolution.kind !== "invalid" || !ctx.hasUI) return;
 	const scopeKey = getCursorSessionScopeKey();
 	if (invalidCursorModeNotifiedSessionScopeKeys.has(scopeKey)) return;
 	invalidCursorModeNotifiedSessionScopeKeys.add(scopeKey);

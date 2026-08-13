@@ -1,5 +1,5 @@
 import { Type, type TSchema } from "typebox";
-import type { ToolInfo } from "@earendil-works/pi-coding-agent";
+import type { ToolInfo } from "@oh-my-pi/pi-coding-agent";
 import type { RegisteredTool } from "./pi-harness-types.js";
 
 export const DEFAULT_BUILTIN_TOOL_NAMES = ["read", "bash", "grep", "find", "ls", "edit", "write"] as const;

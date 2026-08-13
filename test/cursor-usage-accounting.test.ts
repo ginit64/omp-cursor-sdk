@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 import { InteractionUpdateSchema, TurnEndedUpdateSchema } from "@cursor/sdk";
-import type { AssistantMessage, Context } from "@earendil-works/pi-ai";
-import { calculateContextTokens } from "@earendil-works/pi-coding-agent";
+import type { AssistantMessage, Context } from "@oh-my-pi/pi-ai";
+import { calculateContextTokens } from "@oh-my-pi/pi-coding-agent";
 import {
 	applyCursorApproximateUsage,
 	applyCursorUsage,

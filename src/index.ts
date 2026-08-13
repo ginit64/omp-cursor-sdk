@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ProviderConfig, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ProviderConfig, ProviderModelConfig } from "@oh-my-pi/pi-coding-agent";
 import { discoverModels, type CursorModelFallbackIssue } from "./model-discovery.js";
 import { registerCursorRuntimeControls } from "./cursor-state.js";
 import { registerCursorNativeToolDisplay } from "./cursor-native-tool-display-registration.js";
@@ -34,7 +34,6 @@ type CursorExtensionApi =
 
 function createCursorProviderConfig(models: ProviderModelConfig[]): ProviderConfig {
 	return {
-		name: "Cursor",
 		baseUrl: "https://cursor.com",
 		apiKey: CURSOR_API_KEY_CONFIG_VALUE,
 		api: "cursor-sdk",

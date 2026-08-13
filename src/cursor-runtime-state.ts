@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	registerCursorCloudLifecycleLedger,
 	runCursorCloudLifecycleCommand,

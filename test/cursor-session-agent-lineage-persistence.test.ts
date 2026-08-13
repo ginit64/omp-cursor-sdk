@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SessionManager } from "@earendil-works/pi-coding-agent";
+import { SessionManager } from "@oh-my-pi/pi-coding-agent";
 import {
 	CURSOR_SESSION_AGENT_LINEAGE_ENTRY_TYPE,
 	parseCursorSessionAgentLineageEntryData,

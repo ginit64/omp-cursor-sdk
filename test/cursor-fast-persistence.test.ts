@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ModelListItem } from "@cursor/sdk";
-import { SessionManager, type ExtensionContext, type SessionEntry } from "@earendil-works/pi-coding-agent";
+import { SessionManager, type ExtensionContext, type SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import { CURSOR_HTTP1_ENV } from "../src/cursor-config.js";
 import {
 	__testUtils,

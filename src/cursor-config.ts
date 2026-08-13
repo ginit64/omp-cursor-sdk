@@ -12,7 +12,8 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
+import { getAgentDir } from "@oh-my-pi/pi-coding-agent";
+import { CONFIG_DIR_NAME } from "@oh-my-pi/pi-utils";
 import { parseOptionalEnvBoolean } from "./cursor-env-boolean.js";
 import { asRecord } from "./cursor-record-utils.js";
 

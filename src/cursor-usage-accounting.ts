@@ -1,4 +1,4 @@
-import type { Api, AssistantMessage, Context, Model } from "@earendil-works/pi-ai";
+import type { Api, AssistantMessage, Context, Model } from "@oh-my-pi/pi-ai";
 import {
 	CURSOR_APPROX_CHARS_PER_TOKEN,
 	CURSOR_IMAGE_TOKEN_ESTIMATE,
@@ -23,8 +23,10 @@ export interface CursorSdkTurnUsage {
 }
 
 function getPromptInputTokenBudget(model: Model<Api>): number {
-	const outputReserveTokens = Math.min(model.maxTokens, Math.max(1, Math.floor(model.contextWindow * 0.2)));
-	return Math.max(1, model.contextWindow - outputReserveTokens);
+	const contextWindow = model.contextWindow ?? 0;
+	const maxTokens = model.maxTokens ?? Math.max(1, Math.floor(contextWindow * 0.8));
+	const outputReserveTokens = Math.min(maxTokens, Math.max(1, Math.floor(contextWindow * 0.2)));
+	return Math.max(1, contextWindow - outputReserveTokens);
 }
 
 export function getCursorPromptOptions(model: Model<Api>): CursorUsagePromptOptions {
@@ -98,8 +100,8 @@ export function isCursorSdkUsageSafeForPiMessage(turnUsage: CursorSdkTurnUsage, 
 		counts.every((count) => Number.isFinite(count) && count >= 0) &&
 		Number.isFinite(uncachedInput) &&
 		uncachedInput >= 0 &&
-		turnUsage.outputTokens <= model.maxTokens &&
-		turnUsage.inputTokens + turnUsage.outputTokens <= model.contextWindow
+		(model.maxTokens === null || turnUsage.outputTokens <= model.maxTokens) &&
+		(model.contextWindow === null || turnUsage.inputTokens + turnUsage.outputTokens <= model.contextWindow)
 	);
 }
 
@@ -127,7 +129,7 @@ function getLastAcceptedContextOccupancy(context: Context, model: Model<Api>): n
 		const { usage } = assistant;
 		const total =
 			usage.totalTokens || usage.input + usage.output + usage.cacheRead + usage.cacheWrite;
-		if (Number.isFinite(total) && total > 0 && total <= model.contextWindow) return total;
+		if (Number.isFinite(total) && total > 0 && (model.contextWindow === null || total <= model.contextWindow)) return total;
 	}
 	return 0;
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
+import { createAssistantMessageEventStream } from "@oh-my-pi/pi-ai";
 import {
 	createExtensionCommandContext,
 	createExtensionRegistrationPi,

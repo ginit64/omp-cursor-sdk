@@ -4,8 +4,7 @@ import type {
 	ModelParameterValue,
 	ModelSelection,
 } from "@cursor/sdk";
-import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import type { ModelThinkingLevel, ThinkingLevelMap } from "@earendil-works/pi-ai";
+import type { ProviderModelConfig } from "@oh-my-pi/pi-coding-agent";
 import { getCursorModelSelectionIdentities } from "../shared/cursor-model-selection-identities.mjs";
 import { loadContextWindowCache } from "./context-window-cache.js";
 import { loadCursorSdk } from "./cursor-sdk-runtime.js";
@@ -17,6 +16,12 @@ import {
 	loadFreshCachedModels,
 	saveModelListCache,
 } from "./model-list-cache.js";
+
+// Vendored from Pi 0.84's pi-ai: OMP has no generic model thinking-level types
+// (pi-catalog is not importable from plugins). OMP's SimpleStreamOptions
+// `reasoning` is `Effort` (minimal..max); "off" is the extension's own level.
+type ModelThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+type ThinkingLevelMap = Partial<Record<ModelThinkingLevel, string | null>>;
 
 const FALLBACK_CONTEXT_WINDOW = 128000;
 const FALLBACK_MAX_TOKENS = 16384;

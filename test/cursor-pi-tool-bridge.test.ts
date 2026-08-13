@@ -2,8 +2,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { McpServerConfig } from "@cursor/sdk";
-import type { Context } from "@earendil-works/pi-ai";
-import type { ExtensionHandler, SessionShutdownEvent, ToolInfo } from "@earendil-works/pi-coding-agent";
+import type { Context } from "@oh-my-pi/pi-ai";
+import type { ExtensionHandler, SessionShutdownEvent, ToolInfo } from "@oh-my-pi/pi-coding-agent";
 import { Type, type TSchema } from "typebox";
 import {
 	createBridgePiHarness,

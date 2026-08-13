@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 
 export type CursorActiveToolApi = Pick<ExtensionAPI, "getActiveTools">;
 

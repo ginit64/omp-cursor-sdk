@@ -11,7 +11,7 @@ import type {
 	ToolCallEventResult,
 	ToolResultEvent,
 	TurnEndEvent,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import { createDefaultSystemPromptOptions, createExtensionTestContext, makeAssistantMessage } from "./context-fixtures.js";
 import type {
 	EventHarness,

@@ -10,16 +10,19 @@ export function registerCursorAgentsContextDedup(pi: CursorAgentsContextExtensio
 			if (!isCursorModel(ctx.model)) return undefined;
 			const { resolveCursorFacingSystemPrompt } = await import("./cursor-agents-context.js");
 			const runtime = resolveEffectiveCursorConfigForContext(ctx).runtime.value;
+			const systemPrompt = event.systemPrompt.join("\n");
+			// OMP's before_agent_start carries no systemPromptOptions; the
+			// context-files dedup is inert (fidelity reduction vs Pi).
 			const resolved = resolveCursorFacingSystemPrompt(
-				event.systemPrompt,
+				systemPrompt,
 				ctx.model,
-				event.systemPromptOptions,
+				undefined,
 				undefined,
 				undefined,
 				runtime,
 			);
-			if (resolved === event.systemPrompt) return undefined;
-			return { systemPrompt: resolved };
+			if (resolved === systemPrompt) return undefined;
+			return { systemPrompt: [resolved] };
 		},
 	});
 }

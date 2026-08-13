@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
+import { getAgentDir } from "@oh-my-pi/pi-coding-agent";
 import { BUNDLED_CONTEXT_WINDOWS } from "./bundled-context-windows.js";
 import { asRecord } from "./cursor-record-utils.js";
 

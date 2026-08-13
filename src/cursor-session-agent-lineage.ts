@@ -1,4 +1,4 @@
-import type { ExtensionAPI, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import { isCursorLocalAgentId } from "./cursor-session-agent-resume.js";
 import { getCursorSessionScopeKey } from "./cursor-session-scope.js";
 import { asRecord } from "./cursor-record-utils.js";

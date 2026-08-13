@@ -1,7 +1,7 @@
 /**
  * Simulates plan-mode execute: strips grep/find/cursor before turn_start resync.
  */
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 
 const NORMAL_MODE_TOOLS = ["read", "bash", "edit", "write"];
 

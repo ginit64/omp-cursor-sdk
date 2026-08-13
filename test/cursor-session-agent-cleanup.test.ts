@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, unlinkSync, w
 import { tmpdir } from "node:os";
 import { join, toNamespacedPath } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SessionManager, type SessionEntry } from "@earendil-works/pi-coding-agent";
+import { SessionManager, type SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	CURSOR_SESSION_AGENT_CLEANUP_ENTRY_TYPE,
 	readCursorSessionAgentCleanupPlan,

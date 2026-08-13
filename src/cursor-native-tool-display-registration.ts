@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { arePiToolsDisabled } from "./cursor-active-tools.js";
 import {
 	CURSOR_MODEL_ACTIVE_REPLAY_TOOL_NAMES,
@@ -36,8 +36,9 @@ function hasNonBuiltinTool(pi: Pick<ExtensionAPI, "getAllTools">, toolName: Nati
 	return existingTool !== undefined && existingTool.sourceInfo.source !== "builtin";
 }
 
-type NativeRegistrationContext = Pick<ExtensionContext, "mode" | "model"> & {
+type NativeRegistrationContext = Pick<ExtensionContext, "model"> & {
 	ui: Pick<ExtensionContext["ui"], "notify">;
+	hasUI: boolean;
 };
 
 async function registerNativeCursorToolsFromSet(
@@ -61,7 +62,7 @@ async function registerNativeCursorToolsFromSet(
 }
 
 function notifySkippedNativeCursorToolsIfNeeded(ctx: NativeRegistrationContext, skippedToolNames: readonly NativeCursorToolName[]): void {
-	if (skippedToolNames.length === 0 || readBooleanEnv(NATIVE_CURSOR_TOOL_DISPLAY_ENV) !== true || ctx.mode !== "tui") return;
+	if (skippedToolNames.length === 0 || readBooleanEnv(NATIVE_CURSOR_TOOL_DISPLAY_ENV) !== true) return;
 	ctx.ui.notify(
 		`Cursor native tool replay skipped for ${skippedToolNames.join(", ")} because another extension already provides ${skippedToolNames.length === 1 ? "that tool" : "those tools"}. Cursor will use scrubbed activity transcripts for skipped tools.`,
 		"warning",
@@ -108,16 +109,17 @@ export function syncRegisteredNativeCursorToolsForModel(
 async function ensureNativeCursorToolsRegisteredForModel(pi: CursorNativeToolRegistryApi, ctx: NativeRegistrationContext): Promise<void> {
 	if (!isCursorModel(ctx.model) || hasAttemptedNativeCursorToolRegistration()) return;
 
+	// OMP port: builtin shadowing (read/bash/edit/write/grep/find/ls) is not
+	// portable (no builtin definition surface); register only the
+	// self-contained replay tool.
 	const nonCoreToolNames = NATIVE_CURSOR_TOOL_NAMES.filter((toolName) => !isCursorCorePiReplayToolName(toolName));
-	const skippedToolNames = [
-		...(await registerNativeCursorToolsFromSet(pi, nonCoreToolNames)),
-		...(await registerNativeCursorToolsFromSet(pi, CURSOR_CORE_PI_REPLAY_TOOL_NAMES)),
-	];
+	const skippedToolNames = await registerNativeCursorToolsFromSet(pi, nonCoreToolNames);
 	notifySkippedNativeCursorToolsIfNeeded(ctx, skippedToolNames);
 }
 
 async function ensureThenSyncNativeCursorToolsForModel(pi: CursorNativeToolRegistryApi, ctx: NativeRegistrationContext): Promise<void> {
-	const requested = isCursorNativeToolRegistrationRequested(ctx.mode);
+	// OMP's ExtensionContext has no mode field; hasUI distinguishes print mode.
+	const requested = isCursorNativeToolRegistrationRequested(ctx.hasUI ? "tui" : "print");
 	setCursorNativeToolDisplayRuntimeRequested(requested);
 	if (!requested) {
 		removeRegisteredNonCoreNativeCursorTools(pi);

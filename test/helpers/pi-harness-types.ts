@@ -1,5 +1,5 @@
 import type { MockedFunction } from "vitest";
-import type { ImageContent, TextContent } from "@earendil-works/pi-ai";
+import type { ImageContent, TextContent } from "@oh-my-pi/pi-ai";
 import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
@@ -22,7 +22,7 @@ import type {
 	ToolResultEvent,
 	TurnEndEvent,
 	TurnStartEvent,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import type { TSchema } from "typebox";
 
 export type RegisteredTool = ToolDefinition<TSchema, unknown, unknown>;

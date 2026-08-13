@@ -1,4 +1,4 @@
-import type { BuildSystemPromptOptions } from "@earendil-works/pi-coding-agent";
+import type { BuildSystemPromptOptions } from "@oh-my-pi/pi-coding-agent";
 import {
 	PI_PROJECT_INSTRUCTIONS_OPEN_PREFIX,
 	serializePiProjectContextSection,

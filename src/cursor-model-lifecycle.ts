@@ -5,7 +5,7 @@ import type {
 	ExtensionHandler,
 	SessionStartEvent,
 	TurnStartEvent,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 
 export type CursorModelLifecycleContext = ExtensionContext;
 
@@ -20,12 +20,12 @@ type CursorModelBeforeAgentStartHandler = ExtensionHandler<BeforeAgentStartEvent
 export interface CursorModelLifecycleExtensionApi {
 	on(event: "session_start", handler: ExtensionHandler<SessionStartEvent>): void;
 	on(event: "before_agent_start", handler: CursorModelBeforeAgentStartHandler): void;
-	on(event: "model_select", handler: (event: CursorModelSelectEvent, ctx: ExtensionContext) => Promise<void> | void): void;
 	on(event: "turn_start", handler: ExtensionHandler<TurnStartEvent>): void;
 }
 
 export interface CursorModelLifecycleHandlers {
 	sessionStart?: CursorModelSessionStartHandler;
+	/** OMP has no model-change event; accepted for source parity but never invoked. */
 	modelSelect?: CursorModelSelectHandler;
 	turnStart?: CursorModelTurnStartHandler;
 	sync?: CursorModelLifecycleSyncHandler;
@@ -48,13 +48,6 @@ export function registerCursorModelLifecycle(
 		pi.on("session_start", async (event, ctx) => {
 			await handlers.sessionStart?.(event, ctx);
 			await sync?.(ctx);
-		});
-	}
-	if (handlers.modelSelect || sync) {
-		pi.on("model_select", async (event, ctx) => {
-			const effectiveCtx = { ...ctx, model: event.model };
-			await handlers.modelSelect?.(event, effectiveCtx);
-			await sync?.(effectiveCtx);
 		});
 	}
 	if (handlers.turnStart || sync) {
