@@ -1,8 +1,32 @@
-# pi-cursor-sdk
+# omp-cursor-sdk
 
-A pi provider extension that lets pi use Cursor models through the local-by-default `@cursor/sdk` agent runtime, with explicit minimal Cursor Cloud opt-in.
+An OMP (Oh My Pi, `@oh-my-pi` 17.x) provider extension that lets OMP use Cursor models through the local-by-default `@cursor/sdk` agent runtime, with explicit minimal Cursor Cloud opt-in.
 
-Use this extension if you primarily use Cursor models inside pi and want Cursor's SDK agent loop preserved while pi adds native model selection, auth, thinking/context controls, session behavior, replay UI, optional local pi tool bridging, and explicit cloud runs when requested.
+This is the OMP port of [pi-cursor-sdk](https://github.com/fitchmultz/pi-cursor-sdk): imports remapped to `@oh-my-pi/*`, tool schemas on `@oh-my-pi/omptype/typebox`, config paths in `~/.omp`, skills sourced from OMP's active-skill registry, auth via `SqliteAuthCredentialStore`, and Pi-only surfaces (model_select / project_trust / session_info_changed events, message_end result rewriting, builtin tool shadowing) adapted or dropped where OMP 17.x structurally differs.
+
+## Install (OMP)
+
+```bash
+omp plugin install --force git:github.com/LoneExile/omp-cursor-sdk#omp-port
+```
+
+Set `CURSOR_API_KEY` in `~/.omp/.env` (an API key from Cursor Dashboard -> API Keys). Start a fresh OMP session, then use any Cursor model:
+
+```bash
+omp --model cursor/composer-2.5
+```
+
+## OMP port fidelity notes
+
+- Builtin tool shadowing (wrapping read/bash/edit/write/grep/find/ls to render Cursor-native activity) is not portable: OMP exposes builtin tool metadata but no wrapped definition to delegate execution to. The self-contained `cursor_replay_activity` tool is registered; recorded Cursor activity still flows into tool results.
+- `before_agent_start` carries no `systemPromptOptions`; the context-files dedup and per-event skill options are inert. The skill catalog is sourced from OMP's `getActiveSkills()`.
+- OMP has no model-change event; `modelSelect` lifecycle handlers are accepted for source parity but never invoked (skills re-sync at `turn_start`).
+- Context-overflow normalization runs in the provider terminal-error path instead of a `message_end` handler (OMP's handler cannot return a replacement message).
+
+## Pi upstream
+
+The original Pi 0.84+ extension documentation below applies to Pi; OMP differences are noted above.
+
 
 ## Why use this instead of an OpenAI-compatible Cursor endpoint?
 
