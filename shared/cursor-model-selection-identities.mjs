@@ -32,9 +32,12 @@ function getSelectableIds(model, reservedIds, ambiguousAliases) {
 }
 
 function encodePiModelId(modelId, context, fastOverride) {
+	// OMP port: Pi used `:fast`/`:slow`, but OMP's model resolver parses
+	// `model:level` as thinking-level syntax, so colon-suffixed ids collapse
+	// at registration. `@` is treated literally (context variants prove it).
 	const contextQualified = context ? `${modelId}@${context}` : modelId;
-	if (fastOverride === true) return `${contextQualified}:fast`;
-	if (fastOverride === false) return `${contextQualified}:slow`;
+	if (fastOverride === true) return `${contextQualified}@fast`;
+	if (fastOverride === false) return `${contextQualified}@slow`;
 	return contextQualified;
 }
 

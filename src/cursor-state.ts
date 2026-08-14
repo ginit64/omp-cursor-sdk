@@ -196,7 +196,7 @@ function getFastPreferenceModelId(metadata: NonNullable<ReturnType<typeof getCur
 }
 
 function getVirtualFastBaseModelId(modelId: string): string {
-	return modelId.replace(/:(?:fast|slow)$/, "");
+	return modelId.replace(/@(?:fast|slow)$/, "");
 }
 
 function getMapFastPreference(
