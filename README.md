@@ -16,6 +16,15 @@ Set `CURSOR_API_KEY` in `~/.omp/.env` (an API key from Cursor Dashboard -> API K
 omp --model cursor/composer-2.5
 ```
 
+Model variants (mirroring the Cursor picker's Fast toggle and Effort control):
+
+```bash
+omp --model cursor/composer-2.5@fast          # fast variant (also @slow)
+omp --model cursor/grok-4.6@fast --thinking high   # "Cursor Grok 4.6 High Fast"
+```
+
+The `@fast`/`@slow` id suffix is the OMP port of Pi's `:fast`/`:slow`; a colon suffix collides with OMP's `model:level` thinking-level syntax and is not selectable.
+
 ## OMP port fidelity notes
 
 - Builtin tool shadowing (wrapping read/bash/edit/write/grep/find/ls to render Cursor-native activity) is not portable: OMP exposes builtin tool metadata but no wrapped definition to delegate execution to. The self-contained `cursor_replay_activity` tool is registered; recorded Cursor activity still flows into tool results.
