@@ -27,6 +27,9 @@ The `@fast`/`@slow` id suffix is the OMP port of Pi's `:fast`/`:slow`; a colon s
 
 ## OMP port fidelity notes
 
+Full integration architecture (loading, discovery, auth, turn path, API
+drift, limitations): see [docs/omp-integration.md](docs/omp-integration.md).
+
 - Builtin tool shadowing (wrapping read/bash/edit/write/grep/find/ls to render Cursor-native activity) is not portable: OMP exposes builtin tool metadata but no wrapped definition to delegate execution to. The self-contained `cursor_replay_activity` tool is registered; recorded Cursor activity still flows into tool results.
 - `before_agent_start` carries no `systemPromptOptions`; the context-files dedup and per-event skill options are inert. The skill catalog is sourced from OMP's `getActiveSkills()`.
 - OMP has no model-change event; `modelSelect` lifecycle handlers are accepted for source parity but never invoked (skills re-sync at `turn_start`).
