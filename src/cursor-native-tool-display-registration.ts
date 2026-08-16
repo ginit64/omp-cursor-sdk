@@ -111,9 +111,10 @@ async function ensureNativeCursorToolsRegisteredForModel(pi: CursorNativeToolReg
 
 	// OMP port: builtin shadowing (read/bash/edit/write/grep/find/ls) is not
 	// portable (no builtin definition surface); register only the
-	// self-contained replay tool.
-	const nonCoreToolNames = NATIVE_CURSOR_TOOL_NAMES.filter((toolName) => !isCursorCorePiReplayToolName(toolName));
-	const skippedToolNames = await registerNativeCursorToolsFromSet(pi, nonCoreToolNames);
+	// self-contained replay tool. Registering a builtin name would hit
+	// createNativeCursorToolDefinition's unsupported-tool throw.
+	const replayOnlyToolNames = NATIVE_CURSOR_TOOL_NAMES.filter(isCursorReplayToolName);
+	const skippedToolNames = await registerNativeCursorToolsFromSet(pi, replayOnlyToolNames);
 	notifySkippedNativeCursorToolsIfNeeded(ctx, skippedToolNames);
 }
 
