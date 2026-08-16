@@ -52,18 +52,6 @@ export default async function (pi: CursorExtensionApi) {
 	// ensureStoredCursorApiKey); best-effort, before model discovery so the
 	// store read also resolves for discovery.
 	await ensureStoredCursorApiKey();
-	// OMP's AuthStorage caches credentials in memory (reload() populates it);
-	// a raw store write alone leaves the cursor provider hidden from /model
-	// and `omp models`. Refresh OMP's instance at session start so the
-	// availability check sees the stored credential.
-	pi.on("session_start", async (_event, ctx) => {
-		await ensureStoredCursorApiKey();
-		try {
-			await ctx.modelRegistry.authStorage.reload();
-		} catch {
-			// Availability refresh is best-effort; the env key still works for turns.
-		}
-	});
 	// Session cwd must register before other session_start listeners that depend on it.
 	registerCursorSessionScope(pi);
 	registerCursorSessionAgentLineage(pi);
