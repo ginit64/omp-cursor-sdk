@@ -43,6 +43,32 @@ async function getStoredCursorApiKey(): Promise<string | undefined> {
 	}
 }
 
+/**
+ * OMP's model picker and `omp models` only list providers that are
+ * config-configured or carry stored auth (`authStorage.hasAuth`); an env key
+ * alone keeps the plugin's cursor/* models hidden from /model even though
+ * `--model cursor/...` works. Persist the resolved key into OMP's credential
+ * store (the same sqlite store the extension reads back) so the provider
+ * shows as available. Never overwrites an existing stored credential.
+ */
+export async function ensureStoredCursorApiKey(): Promise<void> {
+	const apiKey = resolveCursorApiKey(process.env.CURSOR_API_KEY);
+	if (!apiKey) return;
+	try {
+		const { SqliteAuthCredentialStore } = await import("@oh-my-pi/pi-coding-agent");
+		const store = await SqliteAuthCredentialStore.open();
+		try {
+			if (store.getApiKey(CURSOR_PROVIDER_ID) === null) {
+				store.saveApiKey(CURSOR_PROVIDER_ID, apiKey);
+			}
+		} finally {
+			store.close();
+		}
+	} catch {
+		// Auth persistence is best-effort; the env key still works for turns.
+	}
+}
+
 export async function resolveCursorRuntimeApiKey(): Promise<string | undefined> {
 	return (await getStoredCursorApiKey()) ?? resolveCursorApiKey(process.env.CURSOR_API_KEY);
 }
