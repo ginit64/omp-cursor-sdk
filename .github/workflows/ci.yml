@@ -16,4 +16,4 @@ jobs:
       - name: Typecheck against OMP types
         run: bun run typecheck:src
       - name: Port-relevant unit tests (Bun runtime)
-        run: bun test
+        run: bun run test
