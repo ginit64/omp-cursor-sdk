@@ -41,8 +41,12 @@ function packageIdentitiesFromTarListing(listing: string): Set<string> {
 }
 
 function npmPack(args: string[], cwd: string): string {
+	// `bun run` sets npm_execpath to the bun binary, which has no `pack`
+	// subcommand. Only honor an npm_execpath that actually looks like npm.
 	const npmCli = process.env.npm_execpath;
-	return npmCli
+	const npmCliBasename = npmCli ? npmCli.split(/[\\/]/).pop() ?? "" : "";
+	const isRealNpmCli = npmCliBasename === "npm" || npmCliBasename === "npm.cmd" || npmCliBasename === "npm-cli.js";
+	return npmCli && isRealNpmCli
 		? execFileSync(process.execPath, [npmCli, ...args], {
 				cwd,
 				encoding: "utf8",
