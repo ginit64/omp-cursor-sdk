@@ -101,11 +101,15 @@ export function registerCursorPiToolBridge(pi: CursorPiToolBridgeExtensionApi): 
 				: undefined;
 		}
 		const windowsAbortMarker = installWindowsBridgeBashAbortMarker(event);
-		const abortController = new AbortController();
 		const trackingStarted = bridgeToolExecutionAbortTracker.track(event.toolCallId, {
-			signal: abortController.signal,
+			// OMP's ExtensionContext exposes abort() but no signal, so the
+			// tracker cannot observe host-initiated aborts from the signal
+			// alone; cancellation arrives via tool_result, session_shutdown,
+			// or the turn_end handler below. A locally-owned AbortController
+			// was tried and removed: it made the tracker's signal
+			// self-referential (only our own abort could trip it) and
+			// double-fired ctx.abort() on tracker-initiated aborts.
 			abort: () => {
-				abortController.abort();
 				ctx.abort();
 				killWindowsBridgeBashMarkerTree(windowsAbortMarker);
 			},
@@ -118,6 +122,11 @@ export function registerCursorPiToolBridge(pi: CursorPiToolBridgeExtensionApi): 
 	});
 	pi.on("tool_result", (event) => {
 		bridgeToolExecutionAbortTracker.finish(event.toolCallId);
+	});
+	// Closest OMP analog to upstream's host-abort signal edge: any bridge
+	// execution still active when a turn ends is aborted. No-op when none.
+	pi.on("turn_end", () => {
+		bridgeToolExecutionAbortTracker.abortAll("Cursor pi tool bridge turn ended");
 	});
 	pi.on("session_shutdown", async () => {
 		const reason = "Cursor pi tool bridge session shutdown";

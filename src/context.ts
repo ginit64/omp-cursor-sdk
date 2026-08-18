@@ -85,7 +85,12 @@ function getCursorBootstrapTailSections(
 }
 
 function normalizePiContextMessages(messages: Context["messages"]): Message[] {
-	return convertToLlm(messages as Parameters<typeof convertToLlm>[0]);
+	const normalized = convertToLlm(messages as Parameters<typeof convertToLlm>[0]);
+	const summaries = messages.filter((message) => {
+		const role = (message as { role?: string }).role;
+		return role === "branchSummary" || role === "compactionSummary";
+	}) as unknown as Message[];
+	return [...normalized, ...summaries];
 }
 
 function isTextBlock(block: { type: string }): block is { type: "text"; text: string } {
@@ -152,6 +157,15 @@ function sanitizeSystemPromptForCursor(systemPrompt: string): string {
 }
 
 function formatMessage(msg: Message): string | undefined {
+	const role = (msg as { role?: string }).role;
+	if (role === "branchSummary") {
+		const entry = msg as unknown as { summary?: string };
+		return `Here is a summary of a branch that this conversation came back from:\n${entry.summary ?? ""}`;
+	}
+	if (role === "compactionSummary") {
+		const entry = msg as unknown as { summary?: string };
+		return `The conversation history before this point was compacted:\n${entry.summary ?? ""}`;
+	}
 	switch (msg.role) {
 		case "user": {
 			const text = formatContentBlocks(msg.content);
@@ -264,6 +278,10 @@ function hashCursorContextValue(value: string): string {
 	return createHash("sha256").update(value).digest("hex").slice(0, 16);
 }
 
+function serializeSystemPrompt(systemPrompt: string | readonly string[] | undefined): string {
+	return typeof systemPrompt === "string" ? systemPrompt : systemPrompt?.join("\n") ?? "";
+}
+
 function serializeMessageForFingerprint(message: Message, index: number): string {
 	switch (message.role) {
 		case "user": {
@@ -339,7 +357,7 @@ function parseCursorContextFingerprint(fingerprint: string): CursorContextFinger
 
 export function computeCursorContextFingerprint(context: Context): string {
 	const payload: CursorContextFingerprintPayload = {
-		systemHash: hashCursorContextValue((context.systemPrompt ?? []).join("\n")),
+		systemHash: hashCursorContextValue(serializeSystemPrompt(context.systemPrompt)),
 		messageHashes: context.messages.map((message, index) => serializeRawPiMessageForFingerprint(message, index)),
 	};
 	return JSON.stringify(payload);
@@ -414,8 +432,9 @@ export function buildCursorPrompt(context: Context, options: CursorPromptOptions
 		sectionsBeforeMessages.push(options.toolManifest);
 	}
 
-	if (context.systemPrompt?.length) {
-		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor((context.systemPrompt ?? []).join("\n"))}`);
+	const systemPrompt = serializeSystemPrompt(context.systemPrompt);
+	if (systemPrompt) {
+		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(systemPrompt)}`);
 	}
 
 	const messages = normalizePiContextMessages(context.messages);

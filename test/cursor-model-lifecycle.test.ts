@@ -12,6 +12,8 @@ describe("registerCursorModelLifecycle", () => {
 		const sessionModel = makeModel("session-model");
 		const selectedModel = makeModel("selected-model");
 		await events.runSessionStart({ model: sessionModel });
+		// OMP has no model_select event; the port does not register it, so
+		// invoking it here is a no-op (kept to pin the absence).
 		await events.invokeEvent(
 			"model_select",
 			{ type: "model_select", model: selectedModel, previousModel: sessionModel, source: "set" },
@@ -20,10 +22,9 @@ describe("registerCursorModelLifecycle", () => {
 		await events.runTurnStart({ model: selectedModel });
 		await events.runBeforeAgentStart({ model: selectedModel });
 
-		expect(sync).toHaveBeenCalledTimes(4);
+		expect(sync).toHaveBeenCalledTimes(3);
 		expect(sync.mock.calls.map(([ctx]) => ctx.model?.id)).toEqual([
 			"session-model",
-			"selected-model",
 			"selected-model",
 			"selected-model",
 		]);
@@ -58,7 +59,7 @@ describe("registerCursorModelLifecycle", () => {
 		expect(result).toEqual({ systemPrompt: " updated" });
 	});
 
-	it("runs explicit model-select and turn-start handlers without raw event hooks", async () => {
+	it("does not invoke modelSelect (OMP has no model-change event) but runs turn-start", async () => {
 		const events = createHarnessEventApi();
 		const calls: string[] = [];
 		registerCursorModelLifecycle(events, {
@@ -84,6 +85,6 @@ describe("registerCursorModelLifecycle", () => {
 		await events.runTurnStart({ model: selectedModel });
 		await events.runBeforeAgentStart({ model: selectedModel });
 
-		expect(calls).toEqual(["select:selected-model", "turn:selected-model", "before:selected-model"]);
+		expect(calls).toEqual(["turn:selected-model", "before:selected-model"]);
 	});
 });

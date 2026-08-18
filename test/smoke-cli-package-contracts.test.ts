@@ -336,7 +336,7 @@ if (!windows.includes("for($i=0;$i -lt 10") || !windows.includes("$w=$e.Replace(
 		const [pack] = JSON.parse(result.stdout) as Array<{ name: string; version: string; files: Array<{ path: string }> }>;
 		const paths = new Set(pack.files.map((file) => file.path));
 
-		expect(pack.name).toBe("pi-cursor-sdk");
+		expect(pack.name).toBe("omp-cursor-sdk");
 		expect(paths.has("scripts/tmux-live-smoke.sh")).toBe(true);
 		expect(paths.has("scripts/isolated-cursor-smoke.sh")).toBe(true);
 		expect(paths.has("scripts/fixtures/plan-strip-shim/index.ts")).toBe(true);
@@ -378,18 +378,19 @@ if (!windows.includes("for($i=0;$i -lt 10") || !windows.includes("$w=$e.Replace(
 		expect(paths.has("CHANGELOG.md")).toBe(true);
 		expect(paths.has("README.md")).toBe(true);
 		expect(paths.has("docs/platform-smoke.md")).toBe(true);
-		expect(paths.has("dist/index.js")).toBe(true);
+		// OMP port: no dist/precompile packaging; the extension entry stays
+		// ./src/index.ts and the upstream build tooling is not shipped.
+		expect(paths.has("dist/index.js")).toBe(false);
 		// pi silently drops manifest entries whose file is missing; assert the
 		// manifest target exists on disk after the pack-triggered build.
 		const manifest = JSON.parse(readFileSync("package.json", "utf8")) as { pi?: { extensions?: string[] } };
 		for (const entry of manifest.pi?.extensions ?? []) {
 			expect(existsSync(entry), `pi.extensions entry missing on disk: ${entry}`).toBe(true);
 		}
-		expect(paths.has("tsconfig.build.json")).toBe(true);
-		expect(paths.has("scripts/build.mjs")).toBe(true);
-		expect(paths.has("scripts/prepare.mjs")).toBe(true);
-		// Launchers import this helper; packed installs break without it.
-		expect(paths.has("scripts/lib/ensure-built.mjs")).toBe(true);
+		expect(paths.has("tsconfig.build.json")).toBe(false);
+		expect(paths.has("scripts/build.mjs")).toBe(false);
+		expect(paths.has("scripts/prepare.mjs")).toBe(false);
+		expect(paths.has("scripts/lib/ensure-built.mjs")).toBe(false);
 		expect([...paths].some((path) => path.startsWith("coverage/") || path.startsWith(".pi/") || path.includes("smoke-dir"))).toBe(false);
 	}, 90_000);
 });

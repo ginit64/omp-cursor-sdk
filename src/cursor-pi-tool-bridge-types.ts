@@ -9,6 +9,7 @@ import type {
 	ToolCallEventResult,
 	ToolInfo,
 	ToolResultEvent,
+	TurnEndEvent,
 } from "@oh-my-pi/pi-coding-agent";
 
 export type CursorPiToolBridgeSnapshotApi = Pick<ExtensionAPI, "getActiveTools" | "getAllTools">;
@@ -17,6 +18,7 @@ export type CursorPiToolBridgeExtensionApi = CursorPiToolBridgeSnapshotApi & {
 	on(event: "tool_call", handler: ExtensionHandler<ToolCallEvent, ToolCallEventResult>): void;
 	on(event: "tool_result", handler: ExtensionHandler<ToolResultEvent>): void;
 	on(event: "session_shutdown", handler: ExtensionHandler<SessionShutdownEvent>): void;
+	on(event: "turn_end", handler: ExtensionHandler<TurnEndEvent>): void;
 };
 
 export interface CursorPiMcpInputSchema {

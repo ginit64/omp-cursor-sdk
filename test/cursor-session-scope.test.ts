@@ -34,34 +34,30 @@ describe("cursor-session-scope cwd", () => {
 		}
 	});
 
-	it("snapshots trust only from Pi trust-resolution provenance", async () => {
+	it("trusts only via the --auto-approve argv scan (OMP has no project_trust event)", async () => {
 		const cwd = mkdtempSync(join(tmpdir(), "pi-cursor-session-trust-"));
 		try {
-			mkdirSync(join(cwd, ".pi"));
-			writeFileSync(join(cwd, ".pi", "cursor-sdk.json"), '{"runtime":"cloud"}\n');
 			const pi = createEventHarness();
 			registerCursorSessionScope(pi);
 
-			await pi.runSessionStart({ cwd, isProjectTrusted: vi.fn(() => true) });
+			await pi.runSessionStart({ cwd });
 			expect(getCursorSessionProjectTrusted()).toBe(false);
 
-			writeFileSync(join(cwd, ".pi", "settings.json"), "{}\n");
-			expect(getCursorSessionProjectTrusted()).toBe(false);
-
+			// The Pi-era project_trust resolution machinery is dead in the
+			// OMP port: recording a resolution does not flip trust, and OMP's
+			// ExtensionContext exposes no isProjectTrusted predicate.
 			cursorSessionScopeTestUtils.recordProjectTrustResolution(cwd);
-			await pi.runSessionStart({ cwd, isProjectTrusted: vi.fn(() => true) });
-			expect(getCursorSessionProjectTrusted()).toBe(true);
+			await pi.runSessionStart({ cwd });
+			expect(getCursorSessionProjectTrusted()).toBe(false);
 		} finally {
 			rmSync(cwd, { recursive: true, force: true });
 		}
 	});
 
-	it("uses Pi argument-consumption semantics for explicit CLI trust", () => {
-		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["--approve"])).toBe(true);
-		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["-a", "--no-approve"])).toBe(false);
-		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["--no-approve", "-a"])).toBe(true);
-		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["--name", "-a"])).toBe(false);
-		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["--model", "--approve"])).toBe(false);
+	it("detects --auto-approve anywhere on the CLI (OMP analog for Pi's --approve)", () => {
+		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["--auto-approve"])).toBe(true);
+		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["prompt", "--auto-approve"])).toBe(true);
+		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved(["--model", "x"])).toBe(false);
 		expect(cursorSessionScopeTestUtils.isCliProjectTrustApproved([])).toBe(false);
 	});
 
@@ -74,19 +70,16 @@ describe("cursor-session-scope cwd", () => {
 		expect(getCursorSessionName()).toBe("Cloud handoff");
 	});
 
-	it("updates the normalized session name when session metadata changes", async () => {
+	it("does not update the session name after session_start (OMP has no session_info_changed event)", async () => {
 		const pi = createEventHarness();
 		registerCursorSessionScope(pi);
 		await pi.runSessionStart({ sessionManager: { getSessionName: vi.fn(() => "Initial") } });
 
 		await pi.invokeEvent("session_info_changed", {
 			type: "session_info_changed",
-			name: "  Renamed\tsession\u001bwith\0controls\u0085  ",
+			name: "  Renamed\t",
 		});
-		expect(getCursorSessionName()).toBe("Renamed session with controls");
-
-		await pi.invokeEvent("session_info_changed", { type: "session_info_changed", name: " \t\u001b\0 " });
-		expect(getCursorSessionName()).toBeUndefined();
+		expect(getCursorSessionName()).toBe("Initial");
 	});
 
 	it("bounds session names before exposing them to provider callers", async () => {

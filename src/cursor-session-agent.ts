@@ -120,7 +120,9 @@ function getAcquireScopeKey(scopeKey: string): string {
 	// OMP may run a background advisor after session_shutdown. Keep the
 	// interactive scope terminally closed, but let that late turn use a
 	// fresh, isolated SDK agent scope.
-	return `${scopeKey}::background`;
+	const background = `${scopeKey}::background`;
+	backgroundScopeKeys.add(background);
+	return background;
 }
 
 function rethrowSupersededWhenReplacedByDifferentPoolKey(scopeKey: string, poolKey: string, error: unknown): void {
@@ -152,6 +154,10 @@ const invalidatedScopeKeys = new Set<string>();
 const deadTransportScopeKeys = new Set<string>();
 let deadTransportAgentDisposeTimeoutMs = 3000;
 const terminalDisposedScopeGenerations = new Map<string, number>();
+// Minted `<scope>::background` pool keys (advisor turns after session
+// shutdown). Tracked so disposeSessionCursorAgent can reclaim them; without
+// this they would live in sessionAgentsByScope until process exit.
+const backgroundScopeKeys = new Set<string>();
 const scopeCreationGenerations = new Map<string, number>();
 const EMPTY_POOL_STATE: SessionCursorAgentPoolState = { status: "empty" };
 const LOCAL_RESUME_FALLBACK_NOTICE = "Could not resume prior Cursor agent; continuing from current pi transcript in a new Cursor agent.";
@@ -672,6 +678,10 @@ export async function resetSessionCursorAgent(scopeKey: string = getCursorSessio
 }
 
 export async function disposeSessionCursorAgent(scopeKey: string = getCursorSessionScopeKey()): Promise<void> {
+	const background = `${scopeKey}::background`;
+	if (backgroundScopeKeys.delete(background)) {
+		await disposePoolEntryForScope(background, { terminal: true });
+	}
 	await disposePoolEntryForScope(scopeKey, { terminal: true });
 }
 

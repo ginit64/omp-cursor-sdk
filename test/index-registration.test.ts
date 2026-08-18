@@ -33,6 +33,7 @@ import { __testUtils as cursorSessionScopeTestUtils } from "../src/cursor-sessio
 import { streamCursor } from "../src/cursor-provider.js";
 import { streamCursorLazy } from "../src/cursor-provider-lazy.js";
 import { buildCursorPiToolBridgeSnapshot } from "../src/cursor-pi-tool-bridge.js";
+import { CURSOR_API_KEY_CONFIG_VALUE } from "../src/cursor-api-key.js";
 import {
 	CURSOR_ASK_QUESTION_BLOCKED_EVENT,
 	CURSOR_ASK_QUESTION_TOOL_NAME,
@@ -41,8 +42,8 @@ import {
 import { CURSOR_ACTIVATE_SKILL_TOOL_NAME } from "../src/cursor-skill-tool.js";
 import { __testUtils as cursorSdkProcessErrorGuardTestUtils } from "../src/cursor-sdk-process-error-guard.js";
 
-const mockedDiscover = vi.mocked(discoverModels);
-const mockedStreamCursor = vi.mocked(streamCursor);
+const mockedDiscover = discoverModels as unknown as ReturnType<typeof vi.fn>;
+const mockedStreamCursor = streamCursor as unknown as ReturnType<typeof vi.fn>;
 
 type DiscoverOptions = Parameters<typeof discoverModels>[0];
 
@@ -189,21 +190,17 @@ describe("extension registration and discovery", () => {
 			"cursor-refresh-config",
 			expect.objectContaining({ description: expect.stringContaining("Refresh filesystem Cursor config") }),
 		);
-		expect(pi.registerTool).toHaveBeenCalledTimes(10);
+		expect(pi.registerTool).toHaveBeenCalledTimes(3);
 		expect(pi._tools.map((tool) => tool.name)).toEqual([
 			CURSOR_ASK_QUESTION_TOOL_NAME,
 			CURSOR_ACTIVATE_SKILL_TOOL_NAME,
-			"grep",
-			"find",
-			"ls",
 			"cursor",
-			"read",
-			"bash",
-			"edit",
-			"write",
 		]);
-		expect(pi._tools.find((tool) => tool.name === CURSOR_ASK_QUESTION_TOOL_NAME)?.promptSnippet).toContain("clarifying question");
-		expect(pi._tools.find((tool) => tool.name === CURSOR_ACTIVATE_SKILL_TOOL_NAME)?.promptSnippet).toContain("Agent Skill");
+		// OMP's ToolDefinition has no promptSnippet/promptGuidelines fields.
+		const askTool = pi._tools.find((tool) => tool.name === CURSOR_ASK_QUESTION_TOOL_NAME);
+		expect(askTool?.promptSnippet).toBeUndefined();
+		const skillTool = pi._tools.find((tool) => tool.name === CURSOR_ACTIVATE_SKILL_TOOL_NAME);
+		expect(skillTool?.promptSnippet).toBeUndefined();
 		const replayTool = pi._tools.find((tool) => tool.name === "cursor");
 		expect(replayTool?.promptSnippet).toBeUndefined();
 		expect(replayTool?.promptGuidelines).toBeUndefined();
@@ -212,23 +209,21 @@ describe("extension registration and discovery", () => {
 			"bash",
 			"edit",
 			"write",
-			"grep",
-			"find",
-			"ls",
-			"cursor",
 			CURSOR_ASK_QUESTION_TOOL_NAME,
 		]);
 		expect(pi.on).toHaveBeenCalledWith("session_start", expect.any(Function));
 		expect(pi.on).toHaveBeenCalledWith("before_agent_start", expect.any(Function));
 		expect(pi.on).toHaveBeenCalledWith("turn_start", expect.any(Function));
-		expect(pi.on).toHaveBeenCalledWith("model_select", expect.any(Function));
+		// OMP has no model_select event; the port must NOT register it.
+		expect(pi.on).not.toHaveBeenCalledWith("model_select", expect.any(Function));
 		expect(mockedDiscover).toHaveBeenCalledOnce();
 		expect(pi.registerProvider).toHaveBeenCalledOnce();
 
 		const [call] = pi._registered;
 		expect(call.name).toBe("cursor");
-		expect(call.config.name).toBe("Cursor");
-		expect(call.config.apiKey).toBe("pi-cursor-sdk-cursor-api-key-placeholder");
+		// OMP's ProviderConfig has no name field.
+		expect((call.config as { name?: string }).name).toBeUndefined();
+		expect(call.config.apiKey).toBe(CURSOR_API_KEY_CONFIG_VALUE);
 		expect(call.config.api).toBe("cursor-sdk");
 		expect(call.config.models).toBe(mockModels);
 		expect(call.config.streamSimple).toBe(streamCursorLazy);

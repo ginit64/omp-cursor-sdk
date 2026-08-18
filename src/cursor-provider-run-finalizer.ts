@@ -11,7 +11,7 @@ import {
 	sanitizeCursorProviderError,
 } from "./cursor-provider-errors.js";
 import type { CursorRuntime } from "./cursor-config.js";
-import { resolveCursorStringApiKey } from "./cursor-api-key.js";
+import { resolveCursorStringApiKeySync } from "./cursor-api-key.js";
 import { rewriteCursorOverflowAssistantMessage } from "./cursor-provider-overflow.js";
 import { CursorLiveRunAbortError } from "./cursor-live-run-coordinator.js";
 import {
@@ -103,7 +103,7 @@ export class CursorRunFinalizer {
 			runResultFallback: run.result,
 			runErrorFallback: run.error,
 			resolvedApiKey: this.params.resolvedApiKey(),
-			optionsApiKey: resolveCursorStringApiKey(runnerParams.options?.apiKey),
+			optionsApiKey: resolveCursorStringApiKeySync(runnerParams.options?.apiKey),
 			sdkEventDebug,
 			cacheContextWindow: true,
 			contextWindowAgentId: liveRun.agent.agentId,
@@ -116,7 +116,7 @@ export class CursorRunFinalizer {
 				if (!liveRun.disposed) {
 					cursorLiveRuns.markError(
 						liveRun,
-						sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? resolveCursorStringApiKey(runnerParams.options?.apiKey), "local"),
+						sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? resolveCursorStringApiKeySync(runnerParams.options?.apiKey), "local"),
 					);
 				}
 				this.safeCleanup(() => sdkEventDebug?.recordWaitResult({ status: "error", error: String(error) }));
@@ -219,7 +219,7 @@ export class CursorRunFinalizer {
 				"error",
 				sanitizeCursorProviderError(
 					error,
-					this.params.resolvedApiKey() ?? resolveCursorStringApiKey(this.params.runnerParams.options?.apiKey),
+					this.params.resolvedApiKey() ?? resolveCursorStringApiKeySync(this.params.runnerParams.options?.apiKey),
 					prepared?.runtimeTarget ?? this.params.runtimeTarget(),
 				),
 			);

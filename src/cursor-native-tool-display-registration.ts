@@ -106,8 +106,14 @@ export function syncRegisteredNativeCursorToolsForModel(
 	if (changed) pi.setActiveTools([...activeToolNames]);
 }
 
+let nativeCursorToolRegistrationStarted = false;
+
 async function ensureNativeCursorToolsRegisteredForModel(pi: CursorNativeToolRegistryApi, ctx: NativeRegistrationContext): Promise<void> {
-	if (!isCursorModel(ctx.model) || hasAttemptedNativeCursorToolRegistration()) return;
+	if (!isCursorModel(ctx.model) || nativeCursorToolRegistrationStarted || hasAttemptedNativeCursorToolRegistration()) return;
+	// Latch before the first await: the guard sets are only mutated after
+	// the dynamic import resolves, so without this an overlapping lifecycle
+	// sync could double-register cursor_replay_activity.
+	nativeCursorToolRegistrationStarted = true;
 
 	// OMP port: builtin shadowing (read/bash/edit/write/grep/find/ls) is not
 	// portable (no builtin definition surface); register only the

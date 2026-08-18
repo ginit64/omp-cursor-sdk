@@ -249,18 +249,30 @@ export function registerCursorSkillTool(pi: CursorSkillToolExtensionApi): void {
 		beforeAgentStart: (event, ctx) => {
 			const cursorModel = isCursorModel(ctx.model);
 			const runtime = resolveEffectiveRuntimeForSkillLifecycle(cursorModel, ctx);
+			const activeSkills = getActiveSkills();
 			if (cursorModel && runtime === "local") {
 				// OMP's before_agent_start carries no systemPromptOptions;
 				// source the catalog from OMP's active-skill registry instead.
-				setCurrentSkills(getActiveSkills());
+				setCurrentSkills(activeSkills);
 			} else {
 				setCurrentSkills([]);
 			}
 			syncCursorSkillToolForModel(pi, ctx.model, runtime);
-			const systemPrompt = event.systemPrompt.join("\n");
-			const resolved = resolveCursorSkillSystemPrompt(systemPrompt, ctx.model, getActiveSkills(), runtime);
-			if (resolved === systemPrompt) return undefined;
-			return { systemPrompt: [resolved] };
+			// Rewrite in place, preserving OMP's systemPrompt element
+			// boundaries (collapsing to one element would change block
+			// boundaries). Append a new element when no part carries the
+			// skills section.
+			const index = event.systemPrompt.findIndex((part) => AVAILABLE_SKILLS_SECTION_PATTERN.test(part));
+			if (index === -1) {
+				const replacement = formatCursorSkillsForPrompt(getVisibleSkills(activeSkills));
+				if (!replacement) return undefined;
+				return { systemPrompt: [...event.systemPrompt, replacement] };
+			}
+			const resolved = resolveCursorSkillSystemPrompt(event.systemPrompt[index], ctx.model, activeSkills, runtime);
+			if (resolved === event.systemPrompt[index]) return undefined;
+			const next = [...event.systemPrompt];
+			next[index] = resolved;
+			return { systemPrompt: next };
 		},
 	});
 }

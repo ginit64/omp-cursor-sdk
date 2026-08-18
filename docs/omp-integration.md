@@ -113,31 +113,36 @@ Cursor Dashboard API key (`crsr_...`), stored in `~/.omp/.env` as
 
 ```
 options.apiKey (from OMP's registry)  ->  resolveCursorStringApiKey()
-    -> only literal strings; ApiKeyResolver values are never forwarded
-agent.db stored credential (provider "cursor")  ->  SqliteAuthCredentialStore.getApiKey("cursor")
+    -> resolves ApiKeyResolver forms via OMP's resolveApiKeyOnce
 process.env.CURSOR_API_KEY   (OMP auto-loads ~/.omp/.env at module init)
+ctx.modelRegistry.getApiKeyForProvider("cursor")   (login-saved keys, OMP's own store)
 ```
 
 Implementation: `resolveCursorApiKey()` normalizes placeholders
 (`$CURSOR_API_KEY`, `${CURSOR_API_KEY}`, the provider-config sentinel) to the
-env value; `resolveCursorStringApiKey()` gates OMP's `ApiKey` type
-(`string | ApiKeyResolver`) to strings before the Cursor SDK sees it.
+env value; `resolveCursorStringApiKey()` resolves an `ApiKey`
+(`string | ApiKeyResolver`) to the literal string the Cursor SDK needs.
 
 ### 4.2 The registration placeholder
 
 `registerProvider` uses a non-empty placeholder
-(`pi-cursor-sdk-cursor-api-key-placeholder`) so the provider registers even
+(`omp-cursor-sdk-cursor-api-key-placeholder`) so the provider registers even
 before auth exists. The real key is resolved at discovery and turn time.
 OMP's registry stores the placeholder; resolution happens through the
-extension's own key path.
+extension's own key path. The legacy `pi-cursor-sdk-...` placeholder string
+is still recognised for compatibility with older saved configs.
 
-### 4.3 Stored credential
+### 4.3 Why the plugin never opens OMP's agent.db
 
-At load, the extension persists the resolved env key into OMP's credential
-store (`SqliteAuthCredentialStore` on `~/.omp/agent/agent.db`, table
-`auth_credentials`, provider `cursor`, type `api_key`) via
-`ensureStoredCursorApiKey()` — never overwriting an existing credential.
-This matters for OMP's availability model, see §8.1.
+Earlier port versions opened a second sqlite connection to OMP's credential
+store (`SqliteAuthCredentialStore` on `~/.omp/agent/agent.db`) to read/write
+a stored `cursor` credential. That second connection's `close()` triggered
+nine macOS `EXC_GUARD` kills (guarded sqlite fds closed from a bun
+background thread — identical guard token across all crash reports), so the
+plugin now resolves the key env-only. Keys saved through OMP's own login
+flows are read via `ctx.modelRegistry.getApiKeyForProvider("cursor")` — by
+OMP's connection, never a second one. Do not reintroduce a direct
+`SqliteAuthCredentialStore` open from the plugin.
 
 ## 5. The turn path
 
@@ -231,7 +236,7 @@ Verified drift table (OMP 17.3.0 vs Pi 0.84):
 | `Skill.disableModelInvocation` | present | absent | filter on `Skill.hide` |
 | thinking levels | `ModelThinkingLevel`/`ThinkingLevelMap` | absent from pi-ai | vendored locally (`minimal..max` + `off`; `Effort` has no `off`) |
 | `CONFIG_DIR_NAME` | pi-coding-agent | `@oh-my-pi/pi-utils` | import moved (value `.omp`) |
-| `readStoredCredential` | shim export | absent | `SqliteAuthCredentialStore` |
+| `readStoredCredential` | shim export | absent | env key + `modelRegistry.getApiKeyForProvider` |
 | `create*ToolDefinition` | root exports | absent | not used (shadowing dropped) |
 | config paths | `~/.pi` | `~/.omp` | automatic via pi-utils |
 
@@ -332,9 +337,16 @@ controls reasoning depth on both variants.
 
 ### Verification
 
+- `npx tsc --noEmit` — typecheck against OMP 17.3.0 types.
+- `bun test` — the port-relevant unit suite, run in the **Bun runtime** (the
+  runtime OMP loads the plugin in). The upstream 126-file suite was written
+  for Pi and is partially OMP-incompatible (imports of Pi-only exports such
+  as `createEventBus` / `InMemoryCredentialStore`); `npm test` scopes to the
+  port-relevant files and `npm run test:full` runs the rest, which still has
+  known Pi-bound failures. Do not run the suite under Node — the `@oh-my-pi`
+  packages are Bun-targeted (`import.meta.dir`, `Bun.env`).
 - `omp --model cursor/composer-2.5 --no-session --mode text "hi"` — smoke turn
 - `omp --model cursor/grok-4.6@fast --thinking high ...` — variant turn
 - `omp plugin list` — plugin enabled
-- `npx tsc --noEmit` in the fork — typecheck against OMP 17.3.0 types
 - `bun -e 'import("./src/index.ts").then(m=>console.log(typeof m.default==="function"))'`
   — load-under-Bun proof (mirrors OMP's loader)

@@ -9,10 +9,11 @@ import {
 } from "@oh-my-pi/pi-ai";
 import { streamCursor } from "./cursor-provider.js";
 import { sanitizeCursorProviderError } from "./cursor-provider-errors.js";
-import { resolveCursorStringApiKey } from "./cursor-api-key.js";
+import { rewriteCursorOverflowAssistantMessage } from "./cursor-provider-overflow.js";
+import { resolveCursorStringApiKeySync } from "./cursor-api-key.js";
 
 function makeProviderRuntimeErrorMessage(model: Model<Api>, error: unknown, apiKey?: string): AssistantMessage {
-	return {
+	const message: AssistantMessage = {
 		role: "assistant",
 		content: [],
 		api: model.api,
@@ -30,6 +31,8 @@ function makeProviderRuntimeErrorMessage(model: Model<Api>, error: unknown, apiK
 		timestamp: Date.now(),
 		errorMessage: `Cursor provider runtime failed: ${sanitizeCursorProviderError(error, apiKey)}`,
 	};
+	const rewritten = rewriteCursorOverflowAssistantMessage(message, true);
+	return rewritten ?? message;
 }
 
 export function streamCursorLazy(
@@ -44,7 +47,7 @@ export function streamCursorLazy(
 				outer.push(event);
 			}
 		} catch (error) {
-			const message = makeProviderRuntimeErrorMessage(model, error, resolveCursorStringApiKey(options?.apiKey));
+			const message = makeProviderRuntimeErrorMessage(model, error, resolveCursorStringApiKeySync(options?.apiKey));
 			outer.push({ type: "error", reason: "error", error: message });
 			outer.end(message);
 		}

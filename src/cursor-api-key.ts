@@ -1,18 +1,20 @@
 export const CURSOR_API_KEY_ENV_VAR = "CURSOR_API_KEY";
 
-import type { ApiKey } from "@oh-my-pi/pi-ai";
+import { resolveApiKeyOnce, type ApiKey } from "@oh-my-pi/pi-ai";
 
 // Non-secret literal sentinel for pi's provider registry. Pi 0.77 treats `$ENV_VAR`
 // values as unconfigured when the env var is absent, which hides fallback models
 // before `/login`. Keep the provider available and resolve the real key in the
 // Cursor provider turn path from pi auth or CURSOR_API_KEY.
-export const CURSOR_API_KEY_CONFIG_VALUE = "pi-cursor-sdk-cursor-api-key-placeholder";
+export const CURSOR_API_KEY_CONFIG_VALUE = "omp-cursor-sdk-cursor-api-key-placeholder";
 
 const CURSOR_API_KEY_PLACEHOLDERS = new Set([
 	CURSOR_API_KEY_ENV_VAR,
 	`$${CURSOR_API_KEY_ENV_VAR}`,
 	`\${${CURSOR_API_KEY_ENV_VAR}}`,
 	CURSOR_API_KEY_CONFIG_VALUE,
+	// Legacy placeholder written into configs by earlier port versions.
+	"pi-cursor-sdk-cursor-api-key-placeholder",
 ]);
 
 export function resolveCursorApiKey(apiKey?: string): string | undefined {
@@ -22,8 +24,22 @@ export function resolveCursorApiKey(apiKey?: string): string | undefined {
 	return trimmed;
 }
 
-/** Resolve an ApiKey that may be a resolver; only literal string keys are usable by the Cursor SDK. */
-export function resolveCursorStringApiKey(apiKey: ApiKey | undefined): string | undefined {
+/**
+ * Resolve an ApiKey that may be a resolver to the literal string the Cursor
+ * SDK needs. OMP can hand providers a static string or an ApiKeyResolver
+ * (minting/rotation); discarding the resolver would surface a false
+ * "missing API key". Uses OMP's own initial-resolve helper.
+ */
+export async function resolveCursorStringApiKey(apiKey: ApiKey | undefined): Promise<string | undefined> {
+	return resolveCursorApiKey(await resolveApiKeyOnce(apiKey));
+}
+
+/**
+ * Sync narrowing for key-adjacent paths that only use the key for scrubbing
+ * or as a fallback (the primary resolution is requireCursorApiKey). A
+ * resolver form is not a literal to scrub or fall back on.
+ */
+export function resolveCursorStringApiKeySync(apiKey: ApiKey | undefined): string | undefined {
 	return typeof apiKey === "string" ? resolveCursorApiKey(apiKey) : undefined;
 }
 

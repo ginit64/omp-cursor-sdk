@@ -232,7 +232,7 @@ function createHarnessEventApi(): EventHarness {
 			{
 				type: "before_agent_start",
 				prompt: "start",
-				systemPrompt: "",
+				systemPrompt: [],
 				systemPromptOptions: createDefaultSystemPromptOptions(ctx.cwd),
 			} satisfies BeforeAgentStartEvent,
 			ctx,

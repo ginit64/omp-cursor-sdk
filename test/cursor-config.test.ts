@@ -42,9 +42,12 @@ function runConfigWriter(
 	gatePath: string,
 	key: string,
 ): Promise<{ code: number | null; output: string }> {
+	const runnerArgs = process.versions.bun
+		? ["test", "test/fixtures/cursor-config-writer.test.ts"]
+		: [resolve("node_modules/vitest/vitest.mjs"), "run", "test/fixtures/cursor-config-writer.test.ts", "--reporter=dot"];
 	const child = spawn(
 		process.execPath,
-		[resolve("node_modules/vitest/vitest.mjs"), "run", "test/fixtures/cursor-config-writer.test.ts", "--reporter=dot"],
+		runnerArgs,
 		{
 			cwd: process.cwd(),
 			env: {
@@ -184,7 +187,7 @@ describe("Cursor SDK config resolver", () => {
 		const projectPath = getCursorSdkProjectConfigPath(cwd);
 		mkdirSync(agentDir, { recursive: true });
 		writeFileSync(userPath, "{}\n");
-		mkdirSync(join(cwd, ".pi"), { recursive: true });
+		mkdirSync(join(cwd, ".omp"), { recursive: true });
 		writeFileSync(projectPath, "{}\n");
 		if (process.platform !== "win32") {
 			chmodSync(userPath, 0o660);
@@ -201,7 +204,7 @@ describe("Cursor SDK config resolver", () => {
 			expect(statSync(projectPath).mode & 0o777).toBe(0o640);
 		}
 		expect(readdirSync(agentDir)).toEqual(["cursor-sdk.json"]);
-		expect(readdirSync(join(cwd, ".pi"))).toEqual(["cursor-sdk.json"]);
+		expect(readdirSync(join(cwd, ".omp"))).toEqual(["cursor-sdk.json"]);
 	});
 
 	it.skipIf(process.platform === "win32")("uses normal umask permissions for new project config files", () => {
@@ -232,7 +235,7 @@ describe("Cursor SDK config resolver", () => {
 
 	it("loads project config only from the caller's snapshotted trust decision", () => {
 		const projectPath = getCursorSdkProjectConfigPath(cwd);
-		mkdirSync(join(cwd, ".pi"), { recursive: true });
+		mkdirSync(join(cwd, ".omp"), { recursive: true });
 		writeFileSync(projectPath, JSON.stringify({ runtime: "cloud" }));
 
 		expect(loadCursorSdkConfig({ cwd, agentDir, projectTrusted: false })).toEqual({ user: {} });
@@ -265,13 +268,18 @@ describe("Cursor SDK config resolver", () => {
 		const gatePath = join(root, "writer-gate");
 		const first = runConfigWriter(path, gatePath, "writerA");
 		const second = runConfigWriter(path, gatePath, "writerB");
-		await vi.waitFor(() => {
-			expect(existsSync(`${gatePath}.writerA.started`)).toBe(true);
-			expect(existsSync(`${gatePath}.writerB.started`)).toBe(true);
-			expect(
-				Number(existsSync(`${gatePath}.writerA.ready`)) + Number(existsSync(`${gatePath}.writerB.ready`)),
-			).toBe(1);
-		}, { timeout: 20_000, interval: 20 });
+		const deadline = Date.now() + 20_000;
+		while (
+			(!existsSync(`${gatePath}.writerA.started`) ||
+				!existsSync(`${gatePath}.writerB.started`) ||
+				Number(existsSync(`${gatePath}.writerA.ready`)) + Number(existsSync(`${gatePath}.writerB.ready`)) !== 1) &&
+			Date.now() < deadline
+		) {
+			await new Promise((resolve) => setTimeout(resolve, 20));
+		}
+		expect(existsSync(`${gatePath}.writerA.started`)).toBe(true);
+		expect(existsSync(`${gatePath}.writerB.started`)).toBe(true);
+		expect(Number(existsSync(`${gatePath}.writerA.ready`)) + Number(existsSync(`${gatePath}.writerB.ready`))).toBe(1);
 		writeFileSync(gatePath, "go");
 		const results = await Promise.all([first, second]);
 		for (const result of results) expect(result.code, result.output).toBe(0);

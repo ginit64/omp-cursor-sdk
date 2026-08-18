@@ -12,7 +12,9 @@ export function registerCursorAgentsContextDedup(pi: CursorAgentsContextExtensio
 			const runtime = resolveEffectiveCursorConfigForContext(ctx).runtime.value;
 			const systemPrompt = event.systemPrompt.join("\n");
 			// OMP's before_agent_start carries no systemPromptOptions; the
-			// context-files dedup is inert (fidelity reduction vs Pi).
+			// context-files dedup is inert today. When it does rewrite,
+			// append the resolved result rather than collapsing the element
+			// array (preserves OMP's block boundaries).
 			const resolved = resolveCursorFacingSystemPrompt(
 				systemPrompt,
 				ctx.model,
@@ -22,7 +24,7 @@ export function registerCursorAgentsContextDedup(pi: CursorAgentsContextExtensio
 				runtime,
 			);
 			if (resolved === systemPrompt) return undefined;
-			return { systemPrompt: [resolved] };
+			return { systemPrompt: [...event.systemPrompt, resolved] };
 		},
 	});
 }

@@ -25,7 +25,7 @@ export interface CursorModelLifecycleExtensionApi {
 
 export interface CursorModelLifecycleHandlers {
 	sessionStart?: CursorModelSessionStartHandler;
-	/** OMP has no model-change event; accepted for source parity but never invoked. */
+	/** @deprecated OMP has no model-change event; accepted for source parity but never invoked. */
 	modelSelect?: CursorModelSelectHandler;
 	turnStart?: CursorModelTurnStartHandler;
 	sync?: CursorModelLifecycleSyncHandler;

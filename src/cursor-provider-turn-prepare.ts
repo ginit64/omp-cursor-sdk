@@ -454,8 +454,8 @@ export async function prepareCursorProviderTurn(
 		: prepareCursorLocalProviderTurn(context);
 }
 
-export function requireCursorApiKey(options: SimpleStreamOptions | undefined): string {
-	const apiKey = resolveCursorStringApiKey(options?.apiKey);
+export async function requireCursorApiKey(options: SimpleStreamOptions | undefined): Promise<string> {
+	const apiKey = await resolveCursorStringApiKey(options?.apiKey);
 	if (!apiKey) throw new Error(MISSING_CURSOR_API_KEY_MESSAGE);
 	return apiKey;
 }

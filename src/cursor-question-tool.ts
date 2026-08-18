@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import type { AgentToolResult, ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { Text } from "@oh-my-pi/pi-tui";
 import { Type } from "@oh-my-pi/omptype/typebox";
 import { arePiToolsDisabled } from "./cursor-active-tools.js";
@@ -16,6 +16,47 @@ export function resolveCursorAskQuestionEnabled(env: Record<string, string | und
 
 /** Package-namespaced event while `cursor_ask_question` awaits pi UI input. */
 export const CURSOR_ASK_QUESTION_BLOCKED_EVENT = "pi-cursor-sdk:ask-question:blocked";
+
+// OMP's ToolDefinition has no executionMode field (upstream used
+// executionMode: "sequential" to serialize ask-question calls). Serialize
+// turns here so two concurrent cursor_ask_question calls cannot race for the
+// interactive prompt surface.
+let askQuestionChain: Promise<unknown> = Promise.resolve();
+
+async function executeAskQuestion(
+	pi: CursorQuestionToolExtensionApi,
+	params: CursorAskQuestionParams,
+	ctx: ExtensionContext,
+): Promise<AgentToolResult> {
+	const questions = normalizeQuestions(params);
+	if (questions.length === 0) {
+		throw new Error("No valid question was provided.");
+	}
+	if (!ctx.hasUI) {
+		throw new Error(
+			"Cannot ask the user because pi UI is unavailable. Make a reasonable default choice and state the assumption before proceeding.",
+		);
+	}
+
+	// Emit a package-namespaced blocked signal while the questionnaire
+	// awaits input so consumers (e.g. Herdr) can map it to blocked/working.
+	emitCursorAskQuestionBlockedEvent(pi, { active: true });
+	try {
+		const answers: CursorQuestionAnswer[] = [];
+		for (const question of questions) {
+			const answer = await askOneQuestion(question, ctx);
+			answers.push(answer);
+			if (answer.cancelled) break;
+		}
+
+		return {
+			content: [{ type: "text" as const, text: summarizeAnswers(answers) }],
+			details: buildDetails(questions, answers, true),
+		};
+	} finally {
+		emitCursorAskQuestionBlockedEvent(pi, { active: false });
+	}
+}
 
 export interface CursorAskQuestionBlockedEventPayload {
 	active: boolean;
@@ -219,34 +260,16 @@ export function registerCursorQuestionTool(pi: CursorQuestionToolExtensionApi): 
 			"Ask the user a clarifying question from Cursor. Use when user preferences materially affect the next step; provide options when possible.",
 		parameters: CursorAskQuestionParamsSchema,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-			const questions = normalizeQuestions(params as CursorAskQuestionParams);
-			if (questions.length === 0) {
-				throw new Error("No valid question was provided.");
-			}
-			if (!ctx.hasUI) {
-				throw new Error(
-					"Cannot ask the user because pi UI is unavailable. Make a reasonable default choice and state the assumption before proceeding.",
-				);
-			}
-
-			// Emit a package-namespaced blocked signal while the questionnaire
-			// awaits input so consumers (e.g. Herdr) can map it to blocked/working.
-			emitCursorAskQuestionBlockedEvent(pi, { active: true });
-			try {
-				const answers: CursorQuestionAnswer[] = [];
-				for (const question of questions) {
-					const answer = await askOneQuestion(question, ctx);
-					answers.push(answer);
-					if (answer.cancelled) break;
-				}
-
-				return {
-					content: [{ type: "text" as const, text: summarizeAnswers(answers) }],
-					details: buildDetails(questions, answers, true),
-				};
-			} finally {
-				emitCursorAskQuestionBlockedEvent(pi, { active: false });
-			}
+			// Serialize ask-question turns (OMP lacks executionMode):
+			// concurrent calls queue behind the previous one instead of racing
+			// for the interactive prompt surface. A rejection never poisons the
+			// chain (the catch reassigns it to a settled promise).
+			const run = askQuestionChain.then(
+				() => executeAskQuestion(pi, params as CursorAskQuestionParams, ctx),
+				() => executeAskQuestion(pi, params as CursorAskQuestionParams, ctx),
+			);
+			askQuestionChain = run.catch(() => undefined);
+			return run;
 		},
 		renderCall(args, _options, theme) {
 			const questions = normalizeQuestions(args as CursorAskQuestionParams);

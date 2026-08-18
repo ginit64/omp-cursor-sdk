@@ -20,7 +20,8 @@ import { disposeAllSessionCursorAgents } from "./cursor-session-agent.js";
 import { attachCursorSdkEventDebugPiStreamTap, type CursorSdkEventDebugSink } from "./cursor-sdk-event-debug.js";
 import { installCursorSdkProcessErrorGuard } from "./cursor-sdk-process-error-guard.js";
 import { sanitizeCursorProviderError } from "./cursor-provider-errors.js";
-import { resolveCursorApiKey, resolveCursorStringApiKey } from "./cursor-api-key.js";
+import { rewriteCursorOverflowAssistantMessage } from "./cursor-provider-overflow.js";
+import { resolveCursorApiKey, resolveCursorStringApiKeySync } from "./cursor-api-key.js";
 import { CursorProviderTurnRunner } from "./cursor-provider-turn-runner.js";
 import { getCursorSessionScopeKey } from "./cursor-session-scope.js";
 import { runExclusiveCursorSessionTurn, __testUtils as cursorSessionTurnQueueTestUtils } from "./cursor-session-turn-queue.js";
@@ -81,7 +82,12 @@ export function streamCursor(
 	})().catch((error: unknown) => {
 		const partial = makeInitialMessage(model);
 		partial.stopReason = "error";
-		partial.errorMessage = sanitizeCursorProviderError(error, resolveCursorStringApiKey(options?.apiKey));
+		partial.errorMessage = sanitizeCursorProviderError(error, resolveCursorStringApiKeySync(options?.apiKey));
+		// Terminal-error normalization also lives here (not just
+		// pushTerminalError) so a failure routed through the outer catch
+		// still rewrites Cursor context-overflow into context_length_exceeded.
+		const rewritten = rewriteCursorOverflowAssistantMessage(partial, true);
+		if (rewritten) Object.assign(partial, rewritten);
 		stream.push({ type: "error", reason: "error", error: partial });
 		stream.end();
 	});

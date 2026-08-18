@@ -2,7 +2,7 @@
 
 An OMP (Oh My Pi, `@oh-my-pi` 17.x) provider extension that lets OMP use Cursor models through the local-by-default `@cursor/sdk` agent runtime, with explicit minimal Cursor Cloud opt-in.
 
-This is the OMP port of [pi-cursor-sdk](https://github.com/fitchmultz/pi-cursor-sdk): imports remapped to `@oh-my-pi/*`, tool schemas on `@oh-my-pi/omptype/typebox`, config paths in `~/.omp`, skills sourced from OMP's active-skill registry, auth via `SqliteAuthCredentialStore`, and Pi-only surfaces (model_select / project_trust / session_info_changed events, message_end result rewriting, builtin tool shadowing) adapted or dropped where OMP 17.x structurally differs.
+This is the OMP port of [pi-cursor-sdk](https://github.com/fitchmultz/pi-cursor-sdk): imports remapped to `@oh-my-pi/*`, tool schemas on `@oh-my-pi/omptype/typebox`, config paths in `~/.omp`, skills sourced from OMP's active-skill registry, auth resolved from `CURSOR_API_KEY` (env via `~/.omp/.env`) and OMP's `modelRegistry.getApiKeyForProvider`, and Pi-only surfaces (model_select / project_trust / session_info_changed events, message_end result rewriting, builtin tool shadowing) adapted or dropped where OMP 17.x structurally differs.
 
 ## Install (OMP)
 

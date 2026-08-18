@@ -76,11 +76,3 @@ export function rewriteCursorOverflowAssistantMessage(
 }
 
 export type CursorOverflowExtensionApi = Pick<ExtensionAPI, "on">;
-
-/**
- * OMP's message_end handler cannot return a replacement message (Pi 0.84
- * result surface), so the event registration is inert. Overflow normalization
- * now runs inside the provider terminal-error path
- * (cursor-provider-run-finalizer.pushTerminalError).
- */
-export function registerCursorOverflowNormalization(_pi: CursorOverflowExtensionApi): void {}
