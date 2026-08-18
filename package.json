@@ -1,6 +1,6 @@
 {
   "name": "omp-cursor-sdk",
-  "version": "0.2.0",
+  "version": "0.3.3",
   "description": "omp provider extension backed by @cursor/sdk local and cloud agents",
   "author": "Mitch Fultz (https://github.com/fitchmultz)",
   "license": "MIT",
