@@ -112,6 +112,17 @@ function assertScopeAcceptsAcquire(scopeKey: string): void {
 	terminalDisposedScopeGenerations.delete(scopeKey);
 }
 
+function getAcquireScopeKey(scopeKey: string): string {
+	const terminalGeneration = terminalDisposedScopeGenerations.get(scopeKey);
+	if (terminalGeneration === undefined || terminalGeneration < getCursorSessionScopeGeneration(scopeKey)) {
+		return scopeKey;
+	}
+	// OMP may run a background advisor after session_shutdown. Keep the
+	// interactive scope terminally closed, but let that late turn use a
+	// fresh, isolated SDK agent scope.
+	return `${scopeKey}::background`;
+}
+
 function rethrowSupersededWhenReplacedByDifferentPoolKey(scopeKey: string, poolKey: string, error: unknown): void {
 	if (!(error instanceof SessionCursorAgentCreationSupersededError)) return;
 	const replacement = sessionAgentsByScope.get(scopeKey);
@@ -547,11 +558,14 @@ export function invalidateSessionAgent(
 }
 
 export async function acquireSessionCursorAgent(params: SessionCursorAgentCreateParams): Promise<SessionCursorAgentLease> {
-	const scopeKey = getCursorSessionScopeKey();
+	const requestedScopeKey = getCursorSessionScopeKey();
+	const scopeKey = getAcquireScopeKey(requestedScopeKey);
 	const persistentStore = getCursorSessionFile() !== undefined;
 
 	while (true) {
-		assertScopeAcceptsAcquire(scopeKey);
+		if (scopeKey === requestedScopeKey) {
+			assertScopeAcceptsAcquire(scopeKey);
+		}
 		if (invalidatedScopeKeys.has(scopeKey)) {
 			await disposePoolEntryForScope(scopeKey);
 		}
