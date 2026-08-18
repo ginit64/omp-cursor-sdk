@@ -1,6 +1,6 @@
+import { EventEmitter } from "node:events";
 import { vi } from "vitest";
 import type { Provider } from "@oh-my-pi/pi-ai";
-import { EventBus } from "@oh-my-pi/pi-coding-agent/utils/event-bus.js";
 import type { ExtensionAPI, ProviderConfig, ToolInfo } from "@oh-my-pi/pi-coding-agent";
 import type { CursorNativeToolDisplayExtensionApi } from "../../src/cursor-native-tool-display-registration.js";
 import type cursorExtensionFactory from "../../src/index.js";
@@ -73,7 +73,7 @@ export function createPiHarness(options: PiHarnessOptions = {}): PiHarness {
 	}) as PiHarness["registerTool"];
 
 	const eventsEmitted: Array<{ channel: string; data: unknown }> = [];
-	const eventBus = new EventBus();
+	const eventBus = new EventEmitter();
 	const events: ExtensionAPI["events"] = {
 		emit: (channel: string, data: unknown) => {
 			eventsEmitted.push({ channel, data });
