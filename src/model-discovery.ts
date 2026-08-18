@@ -389,6 +389,16 @@ export async function discoverModels(options: DiscoverModelsOptions = {}): Promi
 		if (cachedModels && cachedModels.length > 0) {
 			return registerModelItems(cachedModels);
 		}
+		// Startup efficiency: prefer a stale cached catalog over importing the
+		// SDK (+~94MB RSS + network round-trip) just because the TTL lapsed.
+		// Sessions that never run a Cursor model must not pay the SDK import;
+		// the catalog refreshes on demand (a Cursor turn or
+		// /cursor-refresh-models). Model ids are validated by the SDK at run
+		// time, so a stale catalog is safe to serve until then.
+		const staleCatalog = loadAnyCachedModelCatalog(keyFingerprint);
+		if (staleCatalog && staleCatalog.models.length > 0) {
+			return registerModelItems(staleCatalog.models);
+		}
 	}
 
 	try {
