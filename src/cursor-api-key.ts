@@ -1,5 +1,4 @@
 export const CURSOR_API_KEY_ENV_VAR = "CURSOR_API_KEY";
-const CURSOR_PROVIDER_ID = "cursor";
 
 import type { ApiKey } from "@oh-my-pi/pi-ai";
 
@@ -28,47 +27,19 @@ export function resolveCursorStringApiKey(apiKey: ApiKey | undefined): string | 
 	return typeof apiKey === "string" ? resolveCursorApiKey(apiKey) : undefined;
 }
 
-async function getStoredCursorApiKey(): Promise<string | undefined> {
-	try {
-		const { SqliteAuthCredentialStore } = await import("@oh-my-pi/pi-coding-agent");
-		const store = await SqliteAuthCredentialStore.open();
-		try {
-			const key = store.getApiKey(CURSOR_PROVIDER_ID);
-			return resolveCursorApiKey(typeof key === "string" ? key : undefined);
-		} finally {
-			store.close();
-		}
-	} catch {
-		return undefined;
-	}
-}
-
 /**
- * OMP's model picker and `omp models` only list providers that are
- * config-configured or carry stored auth (`authStorage.hasAuth`); an env key
- * alone keeps the plugin's cursor/* models hidden from /model even though
- * `--model cursor/...` works. Persist the resolved key into OMP's credential
- * store (the same sqlite store the extension reads back) so the provider
- * shows as available. Never overwrites an existing stored credential.
+ * Resolve the runtime API key for discovery and turns.
+ *
+ * Env-only by design: OMP auto-loads ~/.omp/.env, so CURSOR_API_KEY is in
+ * process.env. Earlier versions also opened a second sqlite connection to
+ * OMP's agent.db (SqliteAuthCredentialStore) to read/write a stored
+ * credential; that second connection's close() triggered macOS EXC_GUARD
+ * kills (bun/sqlite guarded-fd close from a background thread — 9 identical
+ * crash reports). The stored credential was never required: provider
+ * availability comes from config (cursor removed from disabledProviders +
+ * modelRoles), and keys saved through OMP's own login flows are resolved by
+ * ctx.modelRegistry.getApiKeyForProvider at turn time.
  */
-export async function ensureStoredCursorApiKey(): Promise<void> {
-	const apiKey = resolveCursorApiKey(process.env.CURSOR_API_KEY);
-	if (!apiKey) return;
-	try {
-		const { SqliteAuthCredentialStore } = await import("@oh-my-pi/pi-coding-agent");
-		const store = await SqliteAuthCredentialStore.open();
-		try {
-			if (store.getApiKey(CURSOR_PROVIDER_ID) === null) {
-				store.saveApiKey(CURSOR_PROVIDER_ID, apiKey);
-			}
-		} finally {
-			store.close();
-		}
-	} catch {
-		// Auth persistence is best-effort; the env key still works for turns.
-	}
-}
-
 export async function resolveCursorRuntimeApiKey(): Promise<string | undefined> {
-	return (await getStoredCursorApiKey()) ?? resolveCursorApiKey(process.env.CURSOR_API_KEY);
+	return resolveCursorApiKey(process.env.CURSOR_API_KEY);
 }

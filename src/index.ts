@@ -10,7 +10,7 @@ import { registerCursorSessionAgentLifecycle } from "./cursor-session-agent-life
 import { registerCursorSessionAgentLineage } from "./cursor-session-agent-lineage.js";
 import { registerCursorSessionAgentResume } from "./cursor-session-agent-resume.js";
 import { streamCursorLazy } from "./cursor-provider-lazy.js";
-import { CURSOR_API_KEY_CONFIG_VALUE, ensureStoredCursorApiKey, resolveCursorApiKey } from "./cursor-api-key.js";
+import { CURSOR_API_KEY_CONFIG_VALUE, resolveCursorApiKey } from "./cursor-api-key.js";
 import { registerCursorFallbackIssueWarning } from "./cursor-fallback-warning.js";
 import { registerCursorAgentsContextDedup } from "./cursor-agents-context-registration.js";
 import { registerCursorOverflowNormalization } from "./cursor-provider-overflow.js";
@@ -47,11 +47,6 @@ function registerCursorProvider(pi: Pick<ExtensionAPI, "registerProvider">, mode
 }
 
 export default async function (pi: CursorExtensionApi) {
-	// Persist the resolved env key into OMP's credential store so the cursor
-	// provider shows as available in /model and `omp models` (see
-	// ensureStoredCursorApiKey); best-effort, before model discovery so the
-	// store read also resolves for discovery.
-	await ensureStoredCursorApiKey();
 	// Session cwd must register before other session_start listeners that depend on it.
 	registerCursorSessionScope(pi);
 	registerCursorSessionAgentLineage(pi);
