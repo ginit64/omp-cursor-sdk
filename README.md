@@ -7,7 +7,7 @@ This is the OMP port of [pi-cursor-sdk](https://github.com/fitchmultz/pi-cursor-
 ## Install (OMP)
 
 ```bash
-omp plugin install --force git:github.com/LoneExile/omp-cursor-sdk#omp-port
+omp plugin install --force git:github.com/LoneExile/omp-cursor-sdk
 ```
 
 Set `CURSOR_API_KEY` in `~/.omp/.env` (an API key from Cursor Dashboard -> API Keys). Start a fresh OMP session, then use any Cursor model:
