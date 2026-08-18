@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.3.3 - 2026-08-14
+
+### Changed
+
+- Hardened the precompiled import guard for legacy and future Pi package aliases plus `createRequire()` / `require.resolve()` escape hatches, while preserving the intentional Cursor SDK ripgrep resolution path.
+
+## 0.3.2 - 2026-08-14
+
+### Fixed
+
+- Keep every Cursor runtime subtree that imports Pi host peers in Pi's static extension graph, preventing precompiled native `import()` from bypassing Pi's peer resolver after install-time dev-dependency pruning. This restores Cursor startup, native tool registration, provider turns, session-agent lifecycle, compaction, AGENTS.md deduplication, and stored Pi credential lookup from a pruned install.
+- Retain safe lazy boundaries for the installed Cursor SDK, SQLite store, MCP bridge implementation, and generated fallback catalog, with an import-graph regression test that rejects future native dynamic imports reaching Pi host peers.
+
+## 0.3.1 - 2026-08-14
+
+### Changed
+
+- `scripts/build.mjs` now reaps `dist.staging.<pid>` directories stranded by dead builds (SIGKILL or crash mid-emit) at the start of every build. Only pids already gone at the signal-0 probe are eligible; pid reuse in the tiny probe-to-remove window remains an inherent limitation. Reaping is best-effort: an unreapable strand warns instead of failing the build.
+- `dist/` is now published by retrying this build's own `rename` instead of waiting on another build. A rename failure yields only when `dist/` exists and is non-empty (an existence check, not an errno check, so platforms that report a different code for rename-onto-existing-directory still behave correctly); otherwise the staging tree is retained and the rename retried, so this build can publish its own output rather than wait on a concurrent winner's scheduling. This closes the review-identified windows where a losing build could exit 1 while a concurrent winner was mid-swap or descheduled.
+- `scripts/prepare.mjs` forwards build output on success too, so install-time diagnostics such as the concurrent-swap race-loss warning are no longer swallowed. If both the build and the final dev-dependency prune fail, the prune warning no longer masks the original build error (and may leave the dev toolchain for manual cleanup).
+- New automated coverage for the staging swap: failed TypeScript emits preserve the previous `dist/`; successful builds purge stale files; dead-pid staging dirs are reaped while live ones survive; the real-process smoke narrows from three twelve-wide rounds to one four-way round; empty directories are not accepted as winners; slow winners cannot time out another build; and publish failures exhaust a bounded retry, fail loudly, and may leave `dist/` absent after removing the old output.
+
+## 0.3.0 - 2026-08-13
+
+### Changed
+
+- The Pi extension manifest now loads precompiled `dist/index.js` instead of transpiling `src/index.ts` through jiti. This reduces load cost on cold starts and after cache invalidation (fresh installs, `pi update`, cache eviction); warm starts with a hot jiti cache were already near parity. A `prepare` lifecycle script builds `dist/` on install and update (including Pi's `npm install --omit=dev` flow) and prunes the dev toolchain back out afterwards.
+
 ## 0.2.0 - 2026-08-06
 
 ### Added
