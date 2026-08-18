@@ -32,7 +32,7 @@ function isTypeOnlyExport(node: ts.ExportDeclaration, isJavaScript: boolean): bo
 		: node.exportClause.elements.every((element) => element.isTypeOnly);
 }
 
-const PI_HOST_PEER_PREFIXES = ["@earendil-works/pi-", "@mariozechner/pi-"] as const;
+const PI_HOST_PEER_PREFIXES = ["@oh-my-pi/pi-", "@mariozechner/pi-"] as const;
 const PI_HOST_PEER_ROOTS = ["@sinclair/typebox", "typebox"] as const;
 
 function isPiHostPeer(specifier: string): boolean {
@@ -442,13 +442,13 @@ describe("Cursor SDK lazy runtime imports", () => {
 		mkdirSync(srcDir);
 		writeFileSync(join(srcDir, "entry.mts"), 'void import("./target.mjs");\n');
 		writeFileSync(join(srcDir, "target.mts"), 'import "@mariozechner/pi-mts";\n');
-		writeFileSync(join(srcDir, "edge.tsx"), 'void import("@earendil-works/pi-tsx");\n');
-		writeFileSync(join(srcDir, "edge.cts"), 'require("@earendil-works/pi-cts");\n');
+		writeFileSync(join(srcDir, "edge.tsx"), 'void import("@oh-my-pi/pi-tsx");\n');
+		writeFileSync(join(srcDir, "edge.cts"), 'require("@oh-my-pi/pi-cts");\n');
 
 		const findings = collectUnsafeHostPeerLoads(sourceFiles(srcDir)).join("\n");
 		expect(findings).toContain("./target.mjs reaches");
 		expect(findings).toContain("@mariozechner/pi-mts");
-		expect(findings).toContain("native host-peer specifier @earendil-works/pi-tsx");
+		expect(findings).toContain("native host-peer specifier @oh-my-pi/pi-tsx");
 		expect(findings).toContain("CommonJS .cts source is unsupported by the host-peer guard");
 	});
 
@@ -459,11 +459,11 @@ describe("Cursor SDK lazy runtime imports", () => {
 		mkdirSync(srcDir);
 		mkdirSync(sharedDir);
 		writeFileSync(join(srcDir, "entry.ts"), 'import "../shared/edge.cjs";\n');
-		writeFileSync(join(sharedDir, "edge.js"), 'void import("@earendil-works/pi-shared-js");\n');
+		writeFileSync(join(sharedDir, "edge.js"), 'void import("@oh-my-pi/pi-shared-js");\n');
 		writeFileSync(join(sharedDir, "edge.cjs"), 'require("@mariozechner/pi-shared-cjs");\n');
 
 		const findings = collectUnsafeHostPeerLoads(runtimeModuleFiles(srcDir, sharedDir)).join("\n");
-		expect(findings).toContain("native host-peer specifier @earendil-works/pi-shared-js");
+		expect(findings).toContain("native host-peer specifier @oh-my-pi/pi-shared-js");
 		expect(findings).toContain("native host-peer specifier @mariozechner/pi-shared-cjs");
 		expect(findings).toContain("CommonJS .cjs shared runtime is unsupported by the host-peer guard");
 	});
@@ -480,7 +480,7 @@ describe("Cursor SDK lazy runtime imports", () => {
 			'import type LegacyModule = require("module");',
 			'import type LegacyPi = require("@mariozechner/pi-ai");',
 			'type LoaderLiteral = "module";',
-			'type PeerLiteral = "@earendil-works/pi-ai";',
+			'type PeerLiteral = "@oh-my-pi/pi-ai";',
 		].join("\n"));
 
 		expect(collectUnsafeHostPeerLoads([fixturePath])).toEqual([]);
@@ -499,7 +499,7 @@ describe("Cursor SDK lazy runtime imports", () => {
 			'class NamedLoader extends require("../shared/helper.mjs").default {}',
 			'class DirectLoader extends createRequire(import.meta.url)("../shared/helper.mjs").default {}',
 		].join("\n"));
-		writeFileSync(join(sharedDir, "helper.mjs"), 'import {} from "@earendil-works/pi-tui";\nexport default class Helper {}\n');
+		writeFileSync(join(sharedDir, "helper.mjs"), 'import {} from "@oh-my-pi/pi-tui";\nexport default class Helper {}\n');
 
 		const findings = collectUnsafeHostPeerLoads(runtimeModuleFiles(srcDir, sharedDir), entryPath).join("\n");
 		expect(findings).toContain("require created by createRequire may only be used via require.resolve");
@@ -563,10 +563,10 @@ describe("Cursor SDK lazy runtime imports", () => {
 		const ambientPath = join(srcDir, "ambient.ts");
 		writeFileSync(ambientPath, [
 			'declare module "module" {}',
-			'declare module "@earendil-works/pi-ambient" {}',
+			'declare module "@oh-my-pi/pi-ambient" {}',
 		].join("\n"));
 		writeFileSync(join(srcDir, "types.d.ts"), 'import Runtime = require("node:module");\n');
-		writeFileSync(join(srcDir, "types.d.mts"), 'import Runtime from "@earendil-works/pi-ai";\n');
+		writeFileSync(join(srcDir, "types.d.mts"), 'import Runtime from "@oh-my-pi/pi-ai";\n');
 		writeFileSync(join(srcDir, "types.d.cts"), 'import Runtime = require("module");\n');
 
 		expect(sourceFiles(srcDir)).toEqual([ambientPath]);
@@ -586,12 +586,12 @@ describe("Cursor SDK lazy runtime imports", () => {
 			'import LegacyModule from "module";',
 			'import ImportEqualsHelper = require("../shared/import-equals-helper.mjs");',
 			'const runtimeRequire = Module.createRequire(import.meta.url);',
-			'runtimeRequire.resolve("@earendil-works/pi-default-create-require");',
+			'runtimeRequire.resolve("@oh-my-pi/pi-default-create-require");',
 			'const indirectPeer = "@mariozechner/pi-indirect-require";',
 			'runtimeRequire(indirectPeer);',
-			'void import("@earendil-works/pi-ai/compat");',
+			'void import("@oh-my-pi/pi-ai/compat");',
 			'void import("@mariozechner/pi-tui/components");',
-			'void import("@earendil-works/pi-future/runtime");',
+			'void import("@oh-my-pi/pi-future/runtime");',
 			'void import("typebox");',
 			'void import("@sinclair/typebox/value");',
 			"void import(`../shared/peer.mjs`);",
@@ -605,34 +605,34 @@ describe("Cursor SDK lazy runtime imports", () => {
 			'void import("./missing.js");',
 		].join("\n"));
 		writeFileSync(join(sharedDir, "peer.mjs"), 'export { Text } from "./nested/host.mjs";\n');
-		writeFileSync(join(nestedSharedDir, "host.mjs"), 'import { Text } from "@earendil-works/pi-tui/components";\nexport { Text };\n');
+		writeFileSync(join(nestedSharedDir, "host.mjs"), 'import { Text } from "@oh-my-pi/pi-tui/components";\nexport { Text };\n');
 		writeFileSync(join(sharedDir, "broken.mjs"), 'export { missing } from "./missing.mjs";\n');
-		writeFileSync(join(sharedDir, "empty-import.mjs"), 'import {} from "@earendil-works/pi-empty-import";\n');
+		writeFileSync(join(sharedDir, "empty-import.mjs"), 'import {} from "@oh-my-pi/pi-empty-import";\n');
 		writeFileSync(join(sharedDir, "empty-export.mjs"), 'export {} from "@mariozechner/pi-empty-export";\n');
 		writeFileSync(join(sharedDir, "import-equals-helper.mjs"), 'import {} from "@mariozechner/pi-import-equals-helper";\n');
-		writeFileSync(join(srcDir, "empty-import.ts"), 'import {} from "@earendil-works/pi-empty-ts-import";\n');
+		writeFileSync(join(srcDir, "empty-import.ts"), 'import {} from "@oh-my-pi/pi-empty-ts-import";\n');
 		writeFileSync(join(srcDir, "empty-export.ts"), 'export {} from "@mariozechner/pi-empty-ts-export";\n');
 
 		const findings = collectUnsafeHostPeerLoads(runtimeModuleFiles(srcDir, sharedDir)).join("\n");
 		expect(findings).toContain("native module loader node:module outside src/cursor-ripgrep-path.ts");
 		expect(findings).toContain("native module loader module outside src/cursor-ripgrep-path.ts");
 		expect(findings).toContain("runtime import-equals ../shared/import-equals-helper.mjs");
-		expect(findings).toContain("native host-peer specifier @earendil-works/pi-default-create-require");
+		expect(findings).toContain("native host-peer specifier @oh-my-pi/pi-default-create-require");
 		expect(findings).toContain("native host-peer specifier @mariozechner/pi-indirect-require");
-		expect(findings).toContain("native host-peer specifier @earendil-works/pi-ai/compat");
+		expect(findings).toContain("native host-peer specifier @oh-my-pi/pi-ai/compat");
 		expect(findings).toContain("native host-peer specifier @mariozechner/pi-tui/components");
-		expect(findings).toContain("native host-peer specifier @earendil-works/pi-future/runtime");
+		expect(findings).toContain("native host-peer specifier @oh-my-pi/pi-future/runtime");
 		expect(findings).toContain("native host-peer specifier typebox");
 		expect(findings).toContain("native host-peer specifier @sinclair/typebox/value");
 		expect(findings).toContain("../shared/peer.mjs reaches");
-		expect(findings).toContain("@earendil-works/pi-tui/components");
+		expect(findings).toContain("@oh-my-pi/pi-tui/components");
 		expect(findings).toContain("../shared/broken.mjs reaches");
 		expect(findings).toContain("unresolved static import ./missing.mjs");
 		expect(findings).toContain("../shared/empty-import.mjs reaches");
-		expect(findings).toContain("@earendil-works/pi-empty-import");
+		expect(findings).toContain("@oh-my-pi/pi-empty-import");
 		expect(findings).toContain("../shared/empty-export.mjs reaches");
 		expect(findings).toContain("@mariozechner/pi-empty-export");
-		expect(findings).not.toContain("@earendil-works/pi-empty-ts-import");
+		expect(findings).not.toContain("@oh-my-pi/pi-empty-ts-import");
 		expect(findings).not.toContain("@mariozechner/pi-empty-ts-export");
 		expect(findings).toContain("non-literal dynamic import");
 		expect(findings).toContain("unresolved relative dynamic import ./missing.js");
