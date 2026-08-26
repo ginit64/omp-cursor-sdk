@@ -69,9 +69,12 @@ describe("package metadata cutover baselines", () => {
 		expect(changelogVersion).toBe(packageJson.version);
 	});
 
-	it("pins Cursor SDK exactly", () => {
-		expect(packageJson.dependencies["@cursor/sdk"]).toBe("1.0.23");
-		expect(lockPackageVersion("@cursor/sdk")).toBe("1.0.23");
+	it("pins and installs Cursor SDK exactly", () => {
+		expect(packageJson.dependencies["@cursor/sdk"]).toBe("1.0.27");
+		const installedSdk = JSON.parse(
+			readFileSync(join(process.cwd(), "node_modules/@cursor/sdk/package.json"), "utf8"),
+		) as { version?: string };
+		expect(installedSdk.version).toBe("1.0.27");
 	});
 
 	it("ships an exact MCP/Hono bundledDependencies closure for published installs", () => {
