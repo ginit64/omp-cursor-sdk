@@ -4,18 +4,18 @@ import { asRecord } from "./cursor-record-utils.js";
 import { scrubSensitiveText } from "./cursor-sensitive-text.js";
 
 export const MISSING_CURSOR_API_KEY_MESSAGE =
-	"Cursor SDK runs require a Cursor SDK API key. Cursor Agent CLI/Desktop login is not reused. Run /login -> Use an API key -> Cursor, set CURSOR_API_KEY before starting pi, or restart pi with --api-key.";
+	"Cursor SDK runs require a Cursor SDK API key. Cursor Agent CLI/Desktop login is not reused. Run /login -> Use an API key -> Cursor, set CURSOR_API_KEY before starting OMP, or restart OMP with --api-key.";
 const GENERIC_CURSOR_SDK_ERROR_MESSAGE =
-	"Cursor SDK request failed. The Cursor SDK API key may be missing, invalid, or unauthorized. Cursor Agent CLI/Desktop login is not reused. Run /login -> Use an API key -> Cursor, verify CURSOR_API_KEY, or pass --api-key, then retry.";
+	"Cursor SDK request failed without a diagnostic detail. The API key may be valid; retry once, then inspect the underlying Cursor SDK/ConnectRPC error instead of assuming an authentication failure.";
 const AUTH_CURSOR_SDK_ERROR_MESSAGE =
 	"Cursor SDK request failed because the Cursor SDK API key may be invalid or unauthorized. Cursor Agent CLI/Desktop login is not reused. Run /login -> Use an API key -> Cursor, verify CURSOR_API_KEY, or pass --api-key, then retry.";
 const CLOUD_AUTH_CURSOR_SDK_ERROR_MESSAGE =
 	"Cursor Cloud Agents request failed because Cloud API authentication rejected the API key. Use a user API key from Cursor Dashboard -> API Keys or a service account API key from Team settings; Team Admin API keys are not supported as Cursor Cloud Agents credentials. Configure the key with /login -> Use an API key -> Cursor, CURSOR_API_KEY, or --api-key, then retry.";
-// Keep "Network error" aligned with pi's agent-level retry classifier.
+// Keep "Network error" aligned with OMP's agent-level retry classifier.
 const NETWORK_CURSOR_SDK_ERROR_MESSAGE =
-	"Network error: Cursor SDK request failed during network or service I/O. Check your connection; pi will retry automatically when auto-retry is enabled.";
+	"Network error: Cursor SDK request failed during network or service I/O. Check your connection; OMP will retry automatically when auto-retry is enabled.";
 
-// Keep this phrase aligned with pi's agent-level retry classifier (`provider.?returned.?error`).
+// Keep this phrase aligned with OMP's agent-level retry classifier (`provider.?returned.?error`).
 const RETRYABLE_CURSOR_RUN_FAILURE_PREFIX = "Provider returned error: Cursor SDK run failed";
 
 export type CursorSdkRunFailureSource = Pick<RunResult, "id" | "requestId" | "status" | "durationMs" | "model" | "result" | "error">;
@@ -166,7 +166,7 @@ function isCursorSdkStallAbortNetworkError(code: unknown, evidence: string, stac
 }
 
 /**
- * @cursor/sdk@1.0.23 throws internal RetriableError (name/kind "RetriableError") with message
+ * @cursor/sdk@1.0.27 throws internal RetriableError (name/kind "RetriableError") with message
  * "Connection stalled" or "Connection stalled repeatedly" after fetchWithRetry exhausts stalls.
  * The ConnectError is only the cause; the top-level error is not a ConnectError.
  */
@@ -182,9 +182,9 @@ export function isCursorSdkConnectionStalledError(error: unknown): boolean {
 }
 
 function isCursorExtensionConnectStack(stack: string): boolean {
-	// pi runs Cursor SDK in Node, where the SDK dynamically imports connect-node.
-	// connect-web is the SDK's Bun/Deno path and is intentionally not classified for supported pi runs.
-	return stack.includes("@connectrpc/connect-node") && /(?:^|[\\/])pi-cursor-sdk(?:[\\/]|$)/.test(stack);
+	// OMP runs Cursor SDK in Node, where the SDK dynamically imports connect-node.
+	// Accept both package names so this remains correct for the OMP fork and upstream-derived fixtures.
+	return stack.includes("@connectrpc/connect-node") && /(?:^|[\\/])(?:omp|pi)-cursor-sdk(?:[\\/]|$)/.test(stack);
 }
 
 function getCursorConnectSource(error: unknown, record: Record<string, unknown> | undefined): CursorConnectErrorSource {
@@ -310,7 +310,7 @@ export function formatCursorSdkRunFailureDetail(
 	if (fromRunError) return withRunErrorCode(fromRunError, errorCode);
 
 	const fromRun = runResult?.trim();
-	if (fromRun && !isKnownGenericRunFailureText(fromRun)) {
+	if (fromRun && !isKnownGenericRunFailureText(runResult)) {
 		return withRunErrorCode(fromRun, errorCode);
 	}
 
