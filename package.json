@@ -15,12 +15,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LoneExile/omp-cursor-sdk.git"
+    "url": "git+https://github.com/ginit64/omp-cursor-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/LoneExile/omp-cursor-sdk/issues"
+    "url": "https://github.com/ginit64/omp-cursor-sdk/issues"
   },
-  "homepage": "https://github.com/LoneExile/omp-cursor-sdk#readme",
+  "homepage": "https://github.com/ginit64/omp-cursor-sdk#readme",
   "files": [
     "shared",
     "src",
@@ -154,7 +154,7 @@
     "smoke:platform:all": "npm run smoke:platform:doctor && node scripts/platform-smoke.mjs run --target macos,ubuntu,windows-native"
   },
   "dependencies": {
-    "@cursor/sdk": "1.0.23",
+    "@cursor/sdk": "1.0.27",
     "@hono/node-server": "2.0.12",
     "@modelcontextprotocol/sdk": "1.30.0",
     "@oh-my-pi/omptype": "17.3.0",
