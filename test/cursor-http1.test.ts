@@ -70,19 +70,34 @@ describe("Cursor SDK HTTP/1.1 configuration", () => {
 		});
 	});
 
-	it("does not configure the SDK when the setting is unset", () => {
+	it("defaults to HTTP/1.1 under Bun when the setting is unset", () => {
 		const configure = vi.fn<(options: CursorConfigureOptions) => void>();
 
-		expect(configureCursorSdkHttp1(sdkWithConfigure(configure), setting(false, "builtin"))).toBeUndefined();
+		expect(
+			configureCursorSdkHttp1(sdkWithConfigure(configure), setting(false, "builtin"), { bunRuntime: true }),
+		).toBe(true);
+		expect(configure).toHaveBeenCalledWith({
+			local: { useHttp1ForAgent: true },
+		});
+	});
+
+	it("leaves the SDK default untouched under Node when the setting is unset", () => {
+		const configure = vi.fn<(options: CursorConfigureOptions) => void>();
+
+		expect(
+			configureCursorSdkHttp1(sdkWithConfigure(configure), setting(false, "builtin"), { bunRuntime: false }),
+		).toBeUndefined();
 		expect(configure).not.toHaveBeenCalled();
 	});
 
-	it("uses the documented null clear after an extension-owned explicit value", () => {
+	it("uses the documented null clear after an extension-owned explicit value under Node", () => {
 		const configure = vi.fn<(options: CursorConfigureOptions) => void>();
 		const sdk = sdkWithConfigure(configure);
 
 		configureCursorSdkHttp1(sdk, setting(true, "session"));
-		expect(configureCursorSdkHttp1(sdk, setting(false, "builtin"))).toBeUndefined();
+		expect(
+			configureCursorSdkHttp1(sdk, setting(false, "builtin"), { bunRuntime: false }),
+		).toBeUndefined();
 		expect(configure).toHaveBeenLastCalledWith({
 			local: { useHttp1ForAgent: null },
 		});
