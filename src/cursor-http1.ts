@@ -12,6 +12,11 @@ type CursorHttp1Sdk = {
 	Cursor: Pick<CursorSdkModule["Cursor"], "configure">;
 };
 
+export interface CursorHttp1RuntimeOptions {
+	/** Test/runtime override. Omit to detect Bun from process.versions.bun. */
+	bunRuntime?: boolean;
+}
+
 let sessionCursorHttp1Enabled: boolean | undefined;
 let globalPreferenceAuthoritative = false;
 let configuredCursor: CursorHttp1Sdk["Cursor"] | undefined;
@@ -42,15 +47,33 @@ export function clearCursorSdkHttp1(): void {
 	configuredCursor = undefined;
 }
 
+function isBunRuntime(): boolean {
+	return typeof process.versions.bun === "string";
+}
+
 export function configureCursorSdkHttp1(
 	sdk: CursorHttp1Sdk,
 	setting: CursorResolvedSetting<boolean>,
+	options: CursorHttp1RuntimeOptions = {},
 ): boolean | undefined {
+	// An explicit setting always wins, including PI_CURSOR_HTTP_1_1=0.
 	if (setting.source !== "builtin") {
 		sdk.Cursor.configure({ local: { useHttp1ForAgent: setting.value } });
 		configuredCursor = sdk.Cursor;
 		return setting.value;
 	}
+
+	// OMP executes extensions inside Bun. Cursor local-agent HTTP/2 has had
+	// Bun-specific transport failures, while the SDK exposes an HTTP/1.1
+	// fallback specifically for the local agent transport. Force that safer
+	// transport by default under Bun; Node keeps the SDK's own default.
+	const bunRuntime = options.bunRuntime ?? isBunRuntime();
+	if (bunRuntime) {
+		sdk.Cursor.configure({ local: { useHttp1ForAgent: true } });
+		configuredCursor = sdk.Cursor;
+		return true;
+	}
+
 	if (configuredCursor === sdk.Cursor) clearCursorSdkHttp1();
 	else configuredCursor = undefined;
 	return undefined;
