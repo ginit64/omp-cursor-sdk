@@ -19,6 +19,24 @@ import {
 export const LOOPBACK_HOST = "127.0.0.1";
 const HTTP_SERVER_CLOSE_GRACE_MS = 250;
 
+export function normalizeCursorPiToolBridgeImportError(error: unknown): Error {
+	if (error instanceof Error) return error;
+	const record = asRecord(error);
+	const message = typeof record?.message === "string"
+		? record.message.trim()
+		: typeof error === "string"
+			? error.trim()
+			: "";
+	const normalized = new Error(message || "Failed to load Cursor pi tool bridge runtime");
+	if (error !== undefined) {
+		Object.defineProperty(normalized, "cause", {
+			value: error,
+			configurable: true,
+		});
+	}
+	return normalized;
+}
+
 export class CursorPiToolBridgeRegistry implements CursorPiToolBridge {
 	private readonly pi: CursorPiToolBridgeSnapshotApi;
 	private readonly env: Record<string, string | undefined>;
@@ -54,8 +72,13 @@ export class CursorPiToolBridgeRegistry implements CursorPiToolBridge {
 				exposeOverlappingBuiltins: resolveCursorPiToolBridgeBuiltinsEnabled(this.env),
 			})
 			: createEmptySnapshot();
-		const { CursorPiToolBridgeRunImpl } = await import("./cursor-pi-tool-bridge-run.js");
-		const run = new CursorPiToolBridgeRunImpl(this, this.env, snapshot, bridgeEnabled && snapshot.tools.length > 0, options);
+		let CursorPiToolBridgeRunImplClass: typeof CursorPiToolBridgeRunImpl;
+		try {
+			({ CursorPiToolBridgeRunImpl: CursorPiToolBridgeRunImplClass } = await import("./cursor-pi-tool-bridge-run.js"));
+		} catch (error) {
+			throw normalizeCursorPiToolBridgeImportError(error);
+		}
+		const run = new CursorPiToolBridgeRunImplClass(this, this.env, snapshot, bridgeEnabled && snapshot.tools.length > 0, options);
 		this.runs.add(run);
 		await run.start();
 		run.emitStartDiagnostics(bridgeEnabled);
