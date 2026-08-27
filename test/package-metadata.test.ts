@@ -1,8 +1,8 @@
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { isAbsolute, join, relative, sep } from "node:path";
+import { join } from "node:path";
 import { getBundledModel } from "@oh-my-pi/pi-catalog/models";
 import { describe, expect, it } from "vitest";
 import { FALLBACK_MODEL_ITEMS } from "../src/cursor-fallback-models.generated.js";
@@ -20,15 +20,8 @@ const packageLock = require("../package-lock.json") as {
 	packages: Record<string, { version?: string; dependencies?: Record<string, string>; bundleDependencies?: boolean | string[] }>;
 };
 
-const BUNDLED_MCP_HONO_CLOSURE = ["@hono/node-server", "@modelcontextprotocol/sdk"] as const;
-
 function lockPackageVersion(packageName: string): string | undefined {
 	return packageLock.packages[`node_modules/${packageName}`]?.version;
-}
-
-function isPathWithin(root: string, target: string): boolean {
-	const pathFromRoot = relative(root, target);
-	return pathFromRoot === "" || (pathFromRoot !== ".." && !pathFromRoot.startsWith(`..${sep}`) && !isAbsolute(pathFromRoot));
 }
 
 function packageIdentitiesFromTarListing(listing: string): Set<string> {
@@ -77,12 +70,18 @@ describe("package metadata cutover baselines", () => {
 		expect(installedSdk.version).toBe("1.0.27");
 	});
 
-	it("ships an exact MCP/Hono bundledDependencies closure for published installs", () => {
+	it("keeps MCP/Hono as ordinary runtime dependencies for Bun git installs", () => {
 		expect(packageJson.dependencies["@modelcontextprotocol/sdk"]).toBe("1.30.0");
 		expect(lockPackageVersion("@modelcontextprotocol/sdk")).toBe("1.30.0");
 		expect(packageJson.dependencies["@hono/node-server"]).toBe("2.0.12");
 		expect(lockPackageVersion("@hono/node-server")).toBe("2.0.12");
-		expect(packageJson.bundledDependencies).toEqual([...BUNDLED_MCP_HONO_CLOSURE]);
+		expect(packageJson.bundledDependencies).toBeUndefined();
+	});
+
+	it("resolves the exact bridge runtime imports from installed dependencies", () => {
+		expect(require.resolve("@modelcontextprotocol/sdk/server/index.js")).toContain("@modelcontextprotocol");
+		expect(require.resolve("@modelcontextprotocol/sdk/server/streamableHttp.js")).toContain("@modelcontextprotocol");
+		expect(require.resolve("@hono/node-server")).toContain("@hono");
 	});
 
 	it("keeps local agent ID policy aligned with the installed public string contract", () => {
@@ -109,11 +108,9 @@ describe("package metadata cutover baselines", () => {
 		expect(lockPackageVersion("@connectrpc/connect-web")).toBe("1.7.0");
 	});
 
-	it("leaves the Cursor SDK transport dependency tree to npm resolution", () => {
+	it("leaves the Cursor SDK transport dependency tree to package-manager resolution", () => {
 		expect(packageJson.dependencies.undici).toBeUndefined();
-		expect(packageJson.bundledDependencies).toEqual([...BUNDLED_MCP_HONO_CLOSURE]);
-		expect(packageJson.bundledDependencies).not.toContain("undici");
-		expect(packageJson.bundledDependencies).not.toContain("@cursor/sdk");
+		expect(packageJson.bundledDependencies).toBeUndefined();
 		expect(packageJson.overrides).toBeUndefined();
 		expect(packageLock.packages["node_modules/@connectrpc/connect-node/node_modules/undici"]?.version).toBe("5.29.0");
 	});
@@ -122,8 +119,8 @@ describe("package metadata cutover baselines", () => {
 		expect(packageJson.overrides).toBeUndefined();
 	});
 
-	it("packs an isolated MCP/Hono closure that beats a hostile host @hono/node-server", () => {
-		const tempRoot = mkdtempSync(join(tmpdir(), "pi-cursor-sdk-hono-bundle-"));
+	it("packs MCP/Hono as dependencies, not falsely bundled payloads", () => {
+		const tempRoot = mkdtempSync(join(tmpdir(), "omp-cursor-sdk-runtime-deps-"));
 		try {
 			const packOutput = npmPack(["pack", "--ignore-scripts", "--pack-destination", tempRoot], process.cwd());
 			const tarballName = packOutput.trim().split(/\r?\n/).at(-1)?.trim();
@@ -132,10 +129,9 @@ describe("package metadata cutover baselines", () => {
 			const listing = execFileSync("tar", ["-tzf", tarballName!], { cwd: tempRoot, encoding: "utf8" });
 			expect(listing).toContain("package/package.json");
 			const packedIdentities = packageIdentitiesFromTarListing(listing);
-			expect(packedIdentities.has("@modelcontextprotocol/sdk")).toBe(true);
-			expect(packedIdentities.has("@hono/node-server")).toBe(true);
+			expect(packedIdentities.has("@modelcontextprotocol/sdk")).toBe(false);
+			expect(packedIdentities.has("@hono/node-server")).toBe(false);
 			expect(packedIdentities.has("@cursor/sdk")).toBe(false);
-			expect(packedIdentities.has("undici")).toBe(false);
 
 			const extractDirName = "extract";
 			const extractDir = join(tempRoot, extractDirName);
@@ -146,37 +142,9 @@ describe("package metadata cutover baselines", () => {
 				bundledDependencies?: string[];
 				dependencies?: Record<string, string>;
 			};
-			expect(packedPackageJson.bundledDependencies).toEqual([...BUNDLED_MCP_HONO_CLOSURE]);
+			expect(packedPackageJson.bundledDependencies).toBeUndefined();
 			expect(packedPackageJson.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.30.0");
 			expect(packedPackageJson.dependencies?.["@hono/node-server"]).toBe("2.0.12");
-
-			const hostRoot = join(tempRoot, "host");
-			const hostNodeModules = join(hostRoot, "node_modules");
-			const packageDir = join(hostNodeModules, "pi-cursor-sdk");
-			mkdirSync(packageDir, { recursive: true });
-			cpSync(join(extractDir, "package"), packageDir, { recursive: true });
-
-			const hostileDir = join(hostNodeModules, "@hono", "node-server");
-			mkdirSync(hostileDir, { recursive: true });
-			writeFileSync(
-				join(hostileDir, "package.json"),
-				`${JSON.stringify({ name: "@hono/node-server", version: "1.19.14", main: "index.js" }, null, 2)}\n`,
-			);
-			writeFileSync(join(hostileDir, "index.js"), "module.exports = { hostile: true };\n");
-
-			const mcpPackageJsonPath = join(packageDir, "node_modules", "@modelcontextprotocol", "sdk", "package.json");
-			const bundledMcpPackageJson = JSON.parse(readFileSync(mcpPackageJsonPath, "utf8")) as { version: string };
-			expect(bundledMcpPackageJson.version).toBe("1.30.0");
-			const mcpRequire = createRequire(mcpPackageJsonPath);
-			const resolvedHonoEntry = realpathSync(mcpRequire.resolve("@hono/node-server"));
-			const bundledHonoRoot = realpathSync(join(packageDir, "node_modules", "@hono", "node-server"));
-			const hostileHonoRoot = realpathSync(join(hostNodeModules, "@hono", "node-server"));
-			expect(isPathWithin(bundledHonoRoot, resolvedHonoEntry)).toBe(true);
-			expect(isPathWithin(hostileHonoRoot, resolvedHonoEntry)).toBe(false);
-			const resolvedVersion = (
-				JSON.parse(readFileSync(join(bundledHonoRoot, "package.json"), "utf8")) as { version: string }
-			).version;
-			expect(resolvedVersion).toBe("2.0.12");
 		} finally {
 			rmSync(tempRoot, { recursive: true, force: true });
 		}
@@ -200,5 +168,4 @@ describe("package metadata cutover baselines", () => {
 		expect(spec).toContain("### `grok-4.5`");
 		expect(spec).not.toContain("grok-4.3");
 	});
-
 });
