@@ -72,13 +72,13 @@ export class CursorPiToolBridgeRegistry implements CursorPiToolBridge {
 				exposeOverlappingBuiltins: resolveCursorPiToolBridgeBuiltinsEnabled(this.env),
 			})
 			: createEmptySnapshot();
-		let CursorPiToolBridgeRunImplClass: typeof CursorPiToolBridgeRunImpl;
+		let bridgeRunModule: typeof import("./cursor-pi-tool-bridge-run.js");
 		try {
-			({ CursorPiToolBridgeRunImpl: CursorPiToolBridgeRunImplClass } = await import("./cursor-pi-tool-bridge-run.js"));
+			bridgeRunModule = await import("./cursor-pi-tool-bridge-run.js");
 		} catch (error) {
 			throw normalizeCursorPiToolBridgeImportError(error);
 		}
-		const run = new CursorPiToolBridgeRunImplClass(this, this.env, snapshot, bridgeEnabled && snapshot.tools.length > 0, options);
+		const run = new bridgeRunModule.CursorPiToolBridgeRunImpl(this, this.env, snapshot, bridgeEnabled && snapshot.tools.length > 0, options);
 		this.runs.add(run);
 		await run.start();
 		run.emitStartDiagnostics(bridgeEnabled);
