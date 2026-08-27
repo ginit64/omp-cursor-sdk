@@ -119,7 +119,7 @@
     "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
     "typecheck:replay-compile": "tsc --noEmit -p test/tsconfig.json",
     "verify": "npm run check:platform-smoke && npm run typecheck && npm test",
-    "test": "bun test test/cursor-api-key.test.ts test/model-list-cache.test.ts test/model-discovery-selection.test.ts test/context.test.ts test/package-metadata.test.ts test/cursor-config.test.ts test/cursor-model-lifecycle.test.ts test/cursor-session-scope.test.ts test/cursor-provider-lazy.test.ts",
+    "test": "bun test test/cursor-api-key.test.ts test/model-list-cache.test.ts test/model-discovery-selection.test.ts test/context.test.ts test/package-metadata.test.ts test/cursor-config.test.ts test/cursor-model-lifecycle.test.ts test/cursor-session-scope.test.ts test/cursor-provider-lazy.test.ts test/cursor-provider-errors-bun.test.ts",
     "test:full": "bun test test/*.test.ts",
     "test:upstream": "vitest run",
     "test:watch": "vitest",
@@ -139,7 +139,7 @@
     "smoke:local-resume:fallback": "node scripts/local-resume-smoke.mjs --fallback",
     "smoke:local-resume:compaction": "node scripts/local-resume-smoke.mjs --compaction",
     "smoke:local-resume:default-dry-run": "node scripts/local-resume-smoke.mjs --default-dry-run",
-    "smoke:local-resume:cleanup": "node scripts/local-resume-smoke.mjs --cleanup",
+    "smoke:local-resume:cleanup": "node scripts/local-resume-cleanup-smoke.mjs",
     "smoke:steering": "node scripts/steering-rpc-smoke.mjs",
     "smoke:jsonl": "node scripts/validate-smoke-jsonl.mjs",
     "debug:sdk-events": "node scripts/debug-sdk-events.mjs",
@@ -164,10 +164,6 @@
     "@oh-my-pi/pi-utils": "17.3.0",
     "zod": "^3.25.0"
   },
-  "bundledDependencies": [
-    "@hono/node-server",
-    "@modelcontextprotocol/sdk"
-  ],
   "devDependencies": {
     "@xterm/xterm": "^6.0.0",
     "node-pty": "^1.1.0",
